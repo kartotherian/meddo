@@ -13,8 +13,8 @@ This style requires an osm2pgsql database loaded with [https://github.com/ClearT
 * Mapnik 3.0.0 or later
 * Software that can interpret YAML style definitions like Kosmtik or Mapbox Studio Classic
 * osm2pgsql 0.90.1 or later with Lua support. Early C++ versions > 0.86.0 may still work with some bugs or missing data.
-* PostgreSQL 9.1 or later
-* PostGIS 2.0 or later
+* PostgreSQL 9.1 or later. 9.4 or later is recommended as earlier versions are not adequately tested with the style.
+* PostGIS 2.0 or later. 2.3 or later is recommended as earlier versions are not adequately tested with the style.
 
 ### Load the data with ClearTables
 
