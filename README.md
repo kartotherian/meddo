@@ -29,6 +29,7 @@ psql -d ct -c 'CREATE EXTENSION postgis; CREATE EXTENSION hstore;'
 cat sql/types/*.sql | psql -1Xq -d ct
 osm2pgsql -d ct --number-processes 3 --output multi --style cleartables.json ~/path/to/extract
 cat sql/post/*.sql | psql -1Xq -d ct
+popd
 ```
 
 Other osm2pgsql flags for performance or updates can be added, and will be necessary for large imports. See the osm2pgsql documentation for more details.
@@ -50,6 +51,14 @@ Meddo uses data from OSMCoastline, hosted on [OpenStreetMapData](http://openstre
 * Mercator projected [water polygons](http://openstreetmapdata.com/data/water-polygons)
 
 *Script used to load TBD*
+
+### Install required functions
+
+Meddo requires some standard stylesheet-independent functions
+
+```sh
+psql -d ct -f functions.sql
+```
 
 ## Schema
 
