@@ -1,0 +1,15 @@
+_prefs:
+  disabled: []
+  inspector: false
+  mapid: ''
+  rev: ''
+  saveCenter: false
+name: Meddo
+description: Vector tiles for Wikipedia
+attribution: 'Data © OpenStreetMap contributors'
+center:
+  - 0
+  - 0
+  - 4
+minzoom: 0
+maxzoom: 15
