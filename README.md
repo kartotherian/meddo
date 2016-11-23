@@ -67,3 +67,7 @@ psql -d ct -f functions.sql
 ## Why "meddo"?
 
 [Meddo](https://en.wikipedia.org/wiki/Marshall_Islands_stick_chart#Meddo_charts) is a type of [Polynesian stick chart](https://en.wikipedia.org/wiki/Marshall_Islands_stick_chart) which contains only a section of the island chain, and meddo creates vector tiles from a larger database. It's also based on the same language as "wiki".
+
+## License
+
+The code is licensed under the [MIT License](LICENSE). If used as directed, use [ODbL licensed OpenStreetMap data](https://www.openstreetmap.org/copyright).
