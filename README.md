@@ -60,6 +60,16 @@ Meddo requires some standard stylesheet-independent functions
 psql -d ct -f functions.sql
 ```
 
+## Usage
+
+### Development
+
+A suitable design program like Kosmtik or Mapbox Studio Classic is needed. If Kosmtik is installed, `kosmtik serve data.yml` will start Kosmtik, and the Data Inspector can be used. For Mapbox Studio, the entire repository is a tm2source project.
+
+### Production
+
+It might be necessary to compile the project to Mapnik XML for production, which can be done in many ways. One way is `kosmtik export data.yml --format xml --output meddo.xml`
+
 ## Schema
 
 *TBD.*
