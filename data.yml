@@ -54,3 +54,52 @@ Layer:
         ) AS buildings
     properties:
       minzoom: 12
+  - id: transport
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            way,
+            class::text,
+            ramp,
+            oneway,
+            brunnel::text,
+            layer
+          FROM (
+            SELECT
+                CASE WHEN oneway = 'reverse' THEN ST_Reverse(way) ELSE way END AS way,
+                class,
+                ramp,
+                oneway IN ('true','reverse') AS oneway,
+                brunnel,
+                layer,
+                NULL::real AS way_area
+              FROM roads
+              WHERE way && !bbox!
+            UNION ALL
+            SELECT
+                way,
+                class,
+                NULL::boolean AS ramp, -- cover ssy
+                NULL::boolean AS oneway,
+                brunnel,
+                layer,
+                NULL::real AS way_area
+              FROM rail
+              WHERE way && !bbox!
+            UNION ALL
+            SELECT
+                way,
+                class,
+                NULL::boolean AS ramp,
+                NULL::boolean AS oneway,
+                brunnel,
+                layer,
+                way_area
+              FROM road_areas
+              WHERE way && !bbox!
+              ) AS t
+          ORDER BY layer, ramp DESC, class, way_area DESC NULLS LAST
+        ) AS transport
+    properties:
+      minzoom: 5
