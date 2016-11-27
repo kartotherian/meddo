@@ -51,7 +51,7 @@ Layer:
           FROM buildings
           WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
           ORDER BY way_area
-        ) AS buildings
+        ) AS building
     properties:
       minzoom: 12
   - id: transport
