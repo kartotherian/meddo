@@ -50,7 +50,9 @@ Meddo uses data from OSMCoastline, hosted on [OpenStreetMapData](http://openstre
 
 * Mercator projected [water polygons](http://openstreetmapdata.com/data/water-polygons)
 
-*Script used to load TBD*
+```sh
+./get-shapefiles.sh
+```
 
 ### Install required functions
 

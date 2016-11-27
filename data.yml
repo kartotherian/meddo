@@ -32,10 +32,13 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
-              way
-            FROM water_areas
-            WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
-              --AND z(!scale_denominator!) >= 6
+            way
+          FROM water_areas
+          WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+        UNION ALL
+        SELECT
+            geom AS way
+          FROM ocean_polygons
         ) AS water
   - id: building
     geometry: polygon
