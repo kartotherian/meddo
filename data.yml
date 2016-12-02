@@ -35,6 +35,17 @@ Layer:
             geom AS way
           FROM ocean_polygons
         ) AS water
+  - id: boundary
+    geometry: linestring
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            way,
+            admin_level,
+            disputed
+          FROM osmborder_lines
+        ) AS boundary
   - id: building
     geometry: polygon
     Datasource:
