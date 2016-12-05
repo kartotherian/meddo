@@ -45,7 +45,15 @@ Layer:
             admin_level,
             disputed
           FROM osmborder_lines
+          WHERE NOT (maritime AND NOT disputed)
+            AND (admin_level <= 2
+            OR admin_level <= 4 AND z(!scale_denominator!) >= 4
+            OR admin_level <= 6 AND z(!scale_denominator!) >= 7
+            OR admin_level <= 8 AND z(!scale_denominator!) >= 10
+            OR z(!scale_denominator!) >= 14)
         ) AS boundary
+    properties:
+      minzoom: 2
   - id: building
     geometry: polygon
     Datasource:
@@ -129,6 +137,7 @@ Layer:
           FROM (
             SELECT
                 CASE WHEN oneway = 'reverse' THEN ST_Reverse(way) ELSE way END AS way,
+                osm_id,
                 name,
                 class,
                 oneway IN ('true','reverse') AS oneway,
@@ -144,28 +153,13 @@ Layer:
                   OR class >= 'service' AND z(!scale_denominator!) >= 14
                   OR z(!scale_denominator!) >= 14
                 )
-            UNION ALL
-            SELECT
-                way,
-                name,
-                class,
-                NULL::boolean AS oneway,
-                NULL::real AS way_area
-              FROM rail
-              WHERE way && !bbox!
-                AND name IS NOT NULL
-            UNION ALL
-            SELECT
-                way,
-                name,
-                class,
-                NULL::boolean AS oneway,
-                way_area
-              FROM road_areas
-              WHERE way && !bbox!
-                AND name IS NOT NULL
               ) AS t
-          ORDER BY class, way_area DESC NULLS LAST
+          -- This sort needs to sort class reverse to the transport layer, where
+          -- high-class roads have to be rendered on top of everything else. Here
+          -- high-class roads need their labels placed first.
+          ORDER BY class DESC, way_area NULLS FIRST,
+            length(name) DESC, name, osm_id
         ) AS transport
     properties:
       minzoom: 5
+      buffer-size: 128
