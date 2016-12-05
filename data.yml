@@ -116,3 +116,56 @@ Layer:
         ) AS transport
     properties:
       minzoom: 5
+  - id: transport_name
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            way,
+            name,
+            NULL::text as ref,
+            class::text,
+            oneway
+          FROM (
+            SELECT
+                CASE WHEN oneway = 'reverse' THEN ST_Reverse(way) ELSE way END AS way,
+                name,
+                class,
+                oneway IN ('true','reverse') AS oneway,
+                NULL::real AS way_area
+              FROM roads
+              WHERE way && !bbox!
+                AND name IS NOT NULL
+                AND (
+                  class >= 'motorway'
+                  OR class >= 'primary' AND z(!scale_denominator!) >= 7
+                  OR class >= 'tertiary' AND z(!scale_denominator!) >= 9
+                  OR class >= 'minor' AND z(!scale_denominator!) >= 12
+                  OR class >= 'service' AND z(!scale_denominator!) >= 14
+                  OR z(!scale_denominator!) >= 14
+                )
+            UNION ALL
+            SELECT
+                way,
+                name,
+                class,
+                NULL::boolean AS oneway,
+                NULL::real AS way_area
+              FROM rail
+              WHERE way && !bbox!
+                AND name IS NOT NULL
+            UNION ALL
+            SELECT
+                way,
+                name,
+                class,
+                NULL::boolean AS oneway,
+                way_area
+              FROM road_areas
+              WHERE way && !bbox!
+                AND name IS NOT NULL
+              ) AS t
+          ORDER BY class, way_area DESC NULLS LAST
+        ) AS transport
+    properties:
+      minzoom: 5
