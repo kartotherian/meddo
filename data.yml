@@ -47,7 +47,7 @@ Layer:
           FROM osmborder_lines
           WHERE NOT (maritime AND NOT disputed)
             AND (admin_level <= 2
-            OR admin_level <= 4 AND z(!scale_denominator!) >= 4
+            OR admin_level <= 4 AND z(!scale_denominator!) >= 3
             OR admin_level <= 6 AND z(!scale_denominator!) >= 7
             OR admin_level <= 8 AND z(!scale_denominator!) >= 10
             OR z(!scale_denominator!) >= 14)
