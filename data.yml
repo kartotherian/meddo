@@ -163,3 +163,64 @@ Layer:
     properties:
       minzoom: 5
       buffer-size: 128
+  - id: place
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            way,
+            name,
+            rank::text AS class, -- TODO: use a case statement to do this properly
+            NULL::bool AS capital,
+            NULL::int AS rank
+          FROM
+            (SELECT
+                DISTINCT ON (ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8))
+                *
+              FROM
+                (SELECT
+                    way,
+                    osm_id,
+                    name,
+                    class,
+                    rank,
+                    population,
+                    NULL::real AS way_area
+                  FROM place_point
+                UNION ALL
+                SELECT
+                    ST_PointOnSurface(way),
+                    osm_id,
+                    name,
+                    class,
+                    rank,
+                    population,
+                    way_area
+                  FROM place_polygon
+                  WHERE way && !bbox! -- filter pre ST_PointOnSurface
+              ) place_all
+              WHERE way && !bbox! -- filter points and post ST_PointOnSurface
+                AND name IS NOT NULL
+                AND (rank >= 'city'
+                  OR (z(!scale_denominator!) >= 6 AND rank >='town' AND class = 'settlement')
+                  OR (z(!scale_denominator!) >= 8 AND rank >='village' AND class = 'settlement')
+                  OR (z(!scale_denominator!) >= 10 AND rank >='hamlet' AND class = 'settlement'))
+                   -- todo: add subregions
+              ORDER BY
+                ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
+                rank DESC NULLS LAST,
+                population DESC NULLS LAST,
+                way_area DESC NULLS LAST,
+                length(name) DESC,
+                name
+            ) AS place_gridded
+          ORDER BY
+            rank DESC NULLS LAST,
+            population DESC NULLS LAST,
+            way_area DESC NULLS LAST,
+            length(name) DESC,
+            name
+        ) AS place
+    properties:
+      minzoom: 4
+      buffer-size: 128
