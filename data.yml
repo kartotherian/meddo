@@ -23,6 +23,9 @@ _parts:
 Layer:
   - id: water
     geometry: polygon
+    properties:
+      minzoom: 0
+      buffer: 4
     Datasource:
       <<: *osm2pgsql
       table: |-
