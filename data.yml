@@ -25,7 +25,7 @@ Layer:
     geometry: polygon
     properties:
       minzoom: 0
-      buffer: 4
+      buffer-size: 4
     Datasource:
       <<: *osm2pgsql
       table: |-
