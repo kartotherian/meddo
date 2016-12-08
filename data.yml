@@ -38,6 +38,44 @@ Layer:
             geom AS way
           FROM ocean_polygons
         ) AS water
+  - id: waterway
+    geometry: linestring
+    properties:
+      minzoom: 6
+      buffer-size: 4
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            way,
+            waterway AS class
+          FROM waterways
+          WHERE waterway = 'river' AND z(!scale_denominator!) >= 8
+            OR waterway = 'canal' AND z(!scale_denominator!) >= 11
+            OR waterway = 'stream' AND z(!scale_denominator!) >= 12
+            OR waterway = 'drain' AND z(!scale_denominator!) >= 13
+            OR waterway = 'ditch' AND z(!scale_denominator!) >= 13
+        ) AS waterway
+  - id: waterway_name
+    geometry: linestring
+    properties:
+      minzoom: 6
+      buffer-size: 4
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            way,
+            name,
+            waterway AS class
+          FROM waterways
+          WHERE name IS NOT NULL AND
+            (waterway = 'river' AND z(!scale_denominator!) >= 8
+              OR waterway = 'canal' AND z(!scale_denominator!) >= 11
+              OR waterway = 'stream' AND z(!scale_denominator!) >= 12
+              OR waterway = 'drain' AND z(!scale_denominator!) >= 13
+              OR waterway = 'ditch' AND z(!scale_denominator!) >= 13)
+        ) AS waterway
   - id: boundary
     geometry: linestring
     Datasource:
