@@ -95,6 +95,19 @@ Layer:
         ) AS boundary
     properties:
       minzoom: 2
+  - id: park
+    geometry: polygon
+    properties:
+      minzoom: 8
+      buffer-size: 8
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            way,
+            class::text
+          FROM protected_area
+        ) AS park
   - id: building
     geometry: polygon
     Datasource:
