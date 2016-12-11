@@ -1,0 +1,20 @@
+settings:
+  temp_schema: loading
+  schema: public
+  data_dir: data
+  database: ct
+  metadata_table: external_data
+sources:
+  simplified_ocean_polygons:
+    type: shp
+    file: simplified-water-polygons-complete-3857/simplified_water_polygons.shp
+    archive:
+      format: zip
+      files:
+        - simplified-water-polygons-complete-3857/simplified_water_polygons.cpg
+        - simplified-water-polygons-complete-3857/simplified_water_polygons.dbf
+        - simplified-water-polygons-complete-3857/simplified_water_polygons.prj
+        - simplified-water-polygons-complete-3857/simplified_water_polygons.shp
+        - simplified-water-polygons-complete-3857/simplified_water_polygons.shx
+    url: http://127.0.0.1/simplified-water-polygons-complete-3857.zip
+  
