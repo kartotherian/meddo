@@ -25,6 +25,12 @@ import psycopg2
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
 
+def database_setup(conn, temp_schema, schema, metadata_table):
+  with conn.cursor() as cur:
+      cur.execute('''CREATE SCHEMA IF NOT EXISTS {temp_schema};'''.format(temp_schema=temp_schema))
+      cur.execute('''CREATE TABLE IF NOT EXISTS "{schema}"."{metadata_table}" (name text primary key, last_modified text);'''
+                    .format(schema=schema, metadata_table=metadata_table))
+  conn.commit()
 def table_index(conn, name, temp_schema):
   with conn.cursor() as cur:
     # ogr creates a ogc_fid column we don't need
@@ -89,12 +95,8 @@ if __name__ == '__main__':
       s.headers.update({'User-Agent': 'get-external-data.py/meddo'})
       
       # DB setup
-      with conn.cursor() as cur:
-          cur.execute('''CREATE SCHEMA IF NOT EXISTS {temp_schema};'''.format_map(config["settings"]))
-          cur.execute('''CREATE TABLE IF NOT EXISTS "{schema}"."{metadata_table}" (name text primary key, last_modified text);'''.format_map(config["settings"]))
-      conn.commit()
-      
-      
+      database_setup(conn, config["settings"]["temp_schema"], config["settings"]["schema"], config["settings"]["metadata_table"])
+
       for name, source in config["sources"].items():
         # Don't attempt to handle strange names
         # you don't want them when writing a style with all the quoting headaches
