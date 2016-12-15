@@ -33,54 +33,61 @@ def database_setup(conn, temp_schema, schema, metadata_table):
                     .format(schema=schema, metadata_table=metadata_table))
   conn.commit()
 
-def table_init(conn, name, temp_schema):
-  with conn.cursor() as cur:
-    cur.execute('''DROP TABLE IF EXISTS "{temp_schema}"."{name}"'''.format(name=name, temp_schema=temp_schema))
-  conn.commit()
 
-def table_lastmodified(conn, name, schema, metadata_table):
-  with conn.cursor() as cur:
-    cur.execute('''SELECT last_modified FROM "{schema}"."{metadata_table}" WHERE name = %s'''.format(schema=schema, metadata_table=metadata_table), [name])
-    results = cur.fetchone()
-    if results is not None:
-      return results[0]
+class Table:
+  def __init__(self, name, conn, temp_schema, schema, metadata_table):
+    self._name = name
+    self._conn = conn
+    self._temp_schema = temp_schema
+    self._dst_schema = schema
+    self._metadata_table = metadata_table
+    with self._conn.cursor() as cur:
+      cur.execute('''DROP TABLE IF EXISTS "{temp_schema}"."{name}"'''.format(name=self._name, temp_schema=self._temp_schema))
+    self._conn.commit()
 
+  # get the last modified date from the metadata table
+  def last_modified(self):
+    with self._conn.cursor() as cur:
+      cur.execute('''SELECT last_modified FROM "{schema}"."{metadata_table}" WHERE name = %s'''.format(schema=self._dst_schema, metadata_table=self._metadata_table), [self._name])
+      results = cur.fetchone()
+      if results is not None:
+        return results[0]
 
-def table_index(conn, name, temp_schema):
-  with conn.cursor() as cur:
-    # ogr creates a ogc_fid column we don't need
-    cur.execute('''ALTER TABLE "{temp_schema}"."{name}" DROP COLUMN ogc_fid;'''.format(name=name, temp_schema=temp_schema))
+  def index(self):
+    with self._conn.cursor() as cur:
+      # ogr creates a ogc_fid column we don't need
+      cur.execute('''ALTER TABLE "{temp_schema}"."{name}" DROP COLUMN ogc_fid;'''.format(name=self._name, temp_schema=self._temp_schema))
 
-    # sorting static tables helps performance and reduces size from the column drop above
-    # see osm2pgsql for why this particular geohash invocation
-    cur.execute('''CREATE INDEX "{name}_geohash"
-                    ON "{temp_schema}"."{name}"
-                    (ST_GeoHash(ST_Transform(ST_Envelope(way),4326),10) COLLATE "C")'''
-                  .format(name=name, temp_schema=temp_schema))
-    cur.execute('''CLUSTER "{temp_schema}"."{name}" USING "{name}_geohash"'''.format(name=name, temp_schema=temp_schema))
-    cur.execute('''DROP INDEX "{temp_schema}"."{name}_geohash"'''.format(name=name, temp_schema=temp_schema))
+      # sorting static tables helps performance and reduces size from the column drop above
+      # see osm2pgsql for why this particular geohash invocation
+      cur.execute('''CREATE INDEX "{name}_geohash"
+                      ON "{temp_schema}"."{name}"
+                      (ST_GeoHash(ST_Transform(ST_Envelope(way),4326),10) COLLATE "C")'''
+                    .format(name=self._name, temp_schema=self._temp_schema))
+      cur.execute('''CLUSTER "{temp_schema}"."{name}" USING "{name}_geohash"'''.format(name=self._name, temp_schema=self._temp_schema))
+      cur.execute('''DROP INDEX "{temp_schema}"."{name}_geohash"'''.format(name=self._name, temp_schema=self._temp_schema))
 
-    # Standard geom index
-    cur.execute('''CREATE INDEX ON "{temp_schema}"."{name}" USING GIST (way) WITH (fillfactor=100)'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
-    cur.execute('''ANALYZE "{temp_schema}"."{name}"'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
-  conn.commit()
+      # Standard geom index
+      cur.execute('''CREATE INDEX ON "{temp_schema}"."{name}" USING GIST (way) WITH (fillfactor=100)'''.format(name=self._name, temp_schema=self._temp_schema))
+      cur.execute('''ANALYZE "{temp_schema}"."{name}"'''.format(name=self._name, temp_schema=self._temp_schema))
+    conn.commit()
 
-def table_replace(conn, name, metadata_table, temp_schema, schema, new_last_modified):
-  with conn.cursor() as cur:
-    cur.execute('''BEGIN;''')
-    cur.execute('''DROP TABLE IF EXISTS "{schema}"."{name}"'''.format(name=name, schema=schema))
-    cur.execute('''ALTER TABLE "{temp_schema}"."{name}" SET SCHEMA "{schema}"'''
-      .format(name=name, temp_schema=temp_schema, schema=schema))
+  def replace(self, new_last_modified):
+    with conn.cursor() as cur:
+      cur.execute('''BEGIN;''')
+      cur.execute('''DROP TABLE IF EXISTS "{schema}"."{name}"'''.format(name=self._name, schema=self._dst_schema))
+      cur.execute('''ALTER TABLE "{temp_schema}"."{name}" SET SCHEMA "{schema}"'''
+        .format(name=self._name, temp_schema=self._temp_schema, schema=self._dst_schema))
 
-    # We checked if the metadata table had this table way up above
-    cur.execute('''SELECT 1 FROM "{schema}"."{metadata_table}" WHERE name = %s'''.format(schema=schema, metadata_table=metadata_table), [name])
-    if cur.rowcount == 0:
-      cur.execute('''INSERT INTO "{schema}"."{metadata_table}" (name, last_modified) VALUES (%s, %s)'''.format(schema=schema, metadata_table=metadata_table),
-                    [name, new_last_modified])
-    else:
-      cur.execute('''UPDATE "{schema}"."{metadata_table}" SET last_modified = %s WHERE name = %s'''.format(schema=schema, metadata_table=metadata_table),
-                    [new_last_modified, name])
-  conn.commit()
+      # We checked if the metadata table had this table way up above
+      cur.execute('''SELECT 1 FROM "{schema}"."{metadata_table}" WHERE name = %s'''.format(schema=self._dst_schema, metadata_table=self._metadata_table), [self._name])
+      if cur.rowcount == 0:
+        cur.execute('''INSERT INTO "{schema}"."{metadata_table}" (name, last_modified) VALUES (%s, %s)'''.format(schema=self._dst_schema, metadata_table=self._metadata_table),
+                      [self._name, new_last_modified])
+      else:
+        cur.execute('''UPDATE "{schema}"."{metadata_table}" SET last_modified = %s WHERE name = %s'''.format(schema=self._dst_schema, metadata_table=self._metadata_table),
+                      [new_last_modified, self._name])
+    conn.commit()
 
 if __name__ == '__main__':
   # parse options
@@ -125,10 +132,10 @@ if __name__ == '__main__':
 
         os.makedirs(workingdir, exist_ok=True)
 
-        table_init(conn, name, config["settings"]["temp_schema"])
+        this_table = Table(name, conn, config["settings"]["temp_schema"], config["settings"]["schema"], config["settings"]["metadata_table"])
 
         if not opts.force:
-          headers = {'If-Modified-Since': table_lastmodified(conn, name, config["settings"]["schema"], config["settings"]["metadata_table"])}
+          headers = {'If-Modified-Since': this_table.last_modified()}
         else:
           headers = {}
 
@@ -174,7 +181,7 @@ if __name__ == '__main__':
             print ("Output was\n{}".format(e.output))
             raise RuntimeError("Unable to load table {}".format(name))
 
-          table_index(conn, name, config["settings"]["temp_schema"])
-          table_replace(conn, name, config["settings"]["metadata_table"], config["settings"]["temp_schema"], config["settings"]["schema"], new_last_modified)
+          this_table.index()
+          this_table.replace(new_last_modified)
         else:
           print("Table {} did not require updating".format(name))
