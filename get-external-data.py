@@ -5,6 +5,7 @@ import yaml
 import os
 import re
 import argparse
+import shutil
 
 # modules for getting data
 import zipfile
@@ -104,6 +105,9 @@ if __name__ == '__main__':
           raise RuntimeError("Only ASCII alphanumeric table names supported")
 
         workingdir = os.path.join(config["settings"]["data_dir"], name)
+        # Clean up anything left over from an aborted run
+        shutil.rmtree(workingdir, ignore_errors=True)
+
         os.makedirs(workingdir, exist_ok=True)
 
         with conn.cursor() as cur:
@@ -156,7 +160,8 @@ if __name__ == '__main__':
           # need to catch errors here
           try:
             ogr2ogr = subprocess.run(ogrcommand, stderr=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, check=True)
-            print (ogr2ogr.stdout)
+            # Cleanup
+            shutil.rmtree(workingdir, ignore_errors=True)
           except subprocess.CalledProcessError as e:
             print ("ogr2ogr returned {} with layer {}".format(e.returncode, name))
             print ("Command line was {}".format(subprocess.list2cmdline(e.cmd)))
