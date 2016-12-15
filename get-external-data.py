@@ -73,7 +73,7 @@ class Table:
     conn.commit()
 
   def replace(self, new_last_modified):
-    with conn.cursor() as cur:
+    with self._conn.cursor() as cur:
       cur.execute('''BEGIN;''')
       cur.execute('''DROP TABLE IF EXISTS "{schema}"."{name}"'''.format(name=self._name, schema=self._dst_schema))
       cur.execute('''ALTER TABLE "{temp_schema}"."{name}" SET SCHEMA "{schema}"'''
