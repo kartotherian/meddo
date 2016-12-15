@@ -59,7 +59,8 @@ def table_replace(conn, name, metadata_table, temp_schema, schema, new_last_modi
       .format(name=name, temp_schema=temp_schema, schema=schema))
 
     # We checked if the metadata table had this table way up above
-    if last_modified is None:
+    cur.execute('''SELECT 1 FROM "{schema}"."{metadata_table}" WHERE name = %s'''.format(schema=schema, metadata_table=metadata_table), [name])
+    if cur.rowcount == 0:
       cur.execute('''INSERT INTO "{schema}"."{metadata_table}" (name, last_modified) VALUES (%s, %s)'''.format(schema=schema, metadata_table=metadata_table),
                     [name, new_last_modified])
     else:
