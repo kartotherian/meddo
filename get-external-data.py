@@ -60,24 +60,24 @@ class Table:
 
       # sorting static tables helps performance and reduces size from the column drop above
       # see osm2pgsql for why this particular geohash invocation
-      cur.execute('''CREATE INDEX "{name}_geohash"
-                      ON "{temp_schema}"."{name}"
-                      (ST_GeoHash(ST_Transform(ST_Envelope(way),4326),10) COLLATE "C")'''
-                    .format(name=self._name, temp_schema=self._temp_schema))
-      cur.execute('''CLUSTER "{temp_schema}"."{name}" USING "{name}_geohash"'''.format(name=self._name, temp_schema=self._temp_schema))
-      cur.execute('''DROP INDEX "{temp_schema}"."{name}_geohash"'''.format(name=self._name, temp_schema=self._temp_schema))
-
-      # Standard geom index
-      cur.execute('''CREATE INDEX ON "{temp_schema}"."{name}" USING GIST (way) WITH (fillfactor=100)'''.format(name=self._name, temp_schema=self._temp_schema))
-      cur.execute('''ANALYZE "{temp_schema}"."{name}"'''.format(name=self._name, temp_schema=self._temp_schema))
+      cur.execute('''
+CREATE INDEX "{name}_geohash"
+  ON "{temp_schema}"."{name}"
+  (ST_GeoHash(ST_Transform(ST_Envelope(way),4326),10) COLLATE "C");
+CLUSTER "{temp_schema}"."{name}" USING "{name}_geohash";
+DROP INDEX "{temp_schema}"."{name}_geohash";
+CREATE INDEX ON "{temp_schema}"."{name}" USING GIST (way) WITH (fillfactor=100);
+ANALYZE "{temp_schema}"."{name}";
+'''.format(name=self._name, temp_schema=self._temp_schema))
     self._conn.commit()
 
   def replace(self, new_last_modified):
     with self._conn.cursor() as cur:
       cur.execute('''BEGIN;''')
-      cur.execute('''DROP TABLE IF EXISTS "{schema}"."{name}"'''.format(name=self._name, schema=self._dst_schema))
-      cur.execute('''ALTER TABLE "{temp_schema}"."{name}" SET SCHEMA "{schema}"'''
-        .format(name=self._name, temp_schema=self._temp_schema, schema=self._dst_schema))
+      cur.execute('''
+DROP TABLE IF EXISTS "{schema}"."{name}";
+ALTER TABLE "{temp_schema}"."{name}" SET SCHEMA "{schema}";
+'''.format(name=self._name, temp_schema=self._temp_schema, schema=self._dst_schema))
 
       # We checked if the metadata table had this table way up above
       cur.execute('''SELECT 1 FROM "{schema}"."{metadata_table}" WHERE name = %s'''.format(schema=self._dst_schema, metadata_table=self._metadata_table), [self._name])
