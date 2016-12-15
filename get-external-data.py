@@ -37,16 +37,19 @@ if __name__ == '__main__':
   parser.add_argument("-U", "--username", action="store", help="Override database user name")
   
   opts = parser.parse_args()
-  print (opts)
   with open('external-data.yml') as config_file:
     config = yaml.safe_load(config_file)
     os.makedirs(config["settings"]["data_dir"], exist_ok=True)
 
+    database = opts.database or config["settings"].get("database")
+    host = opts.host or config["settings"].get("host")
+    port = opts.port or config["settings"].get("port")
+    user = opts.username or config["settings"].get("username")
     with requests.Session() as s, \
-         psycopg2.connect(database=opts.database or config["settings"].get("database"),
-                          host=opts.host or config["settings"].get("host"),
-                          port=opts.port or config["settings"].get("port"),
-                          user=opts.username or config["settings"].get("username")) as conn:
+         psycopg2.connect(database=database,
+                          host=host,
+                          port=port,
+                          user=user) as conn:
 
       s.headers.update({'User-Agent': 'get-external-data.py/meddo'})
       
@@ -66,8 +69,8 @@ if __name__ == '__main__':
         workingdir = os.path.join(config["settings"]["data_dir"], name)
         os.makedirs(workingdir, exist_ok=True)
 
-        print(source)
         with conn.cursor() as cur:
+          cur.execute('''DROP TABLE IF EXISTS "{}"."{}"'''.format(config["settings"]["temp_schema"],name))
           # should lock the row for update
           cur.execute('''SELECT last_modified FROM "{schema}"."{metadata_table}" WHERE name = %s'''.format_map(config["settings"]), [name])
           results = cur.fetchone()
@@ -75,27 +78,90 @@ if __name__ == '__main__':
             last_modified = results[0]
           else:
             last_modified = None
-
         conn.commit()
 
-        headers = {'If-Modified-Since': last_modified}
-        print(headers)
-        download = s.get(source["url"], headers=headers)
-        print(download.status_code)
-        print(download.headers)
+        if not opts.force:
+          headers = {'If-Modified-Since': last_modified}
+        else:
+          headers = {}
 
+        download = s.get(source["url"], headers=headers)
         download.raise_for_status()
-        if (download.status_code == 200 or opts.force):
+
+        if (download.status_code == 200):
           if "Last-Modified" in download.headers:
             new_last_modified = download.headers["Last-Modified"]
           else:
             new_last_modified = None
           if "archive" in source and source["archive"]["format"] == "zip":
             zip = zipfile.ZipFile(io.BytesIO(download.content))
-            print(zip.namelist())
             for member in source["archive"]["files"]:
               zip.extract(member, workingdir)
+
+          ogrpg = "PG:dbname={}".format(database)
+
+          if port is not None:
+            ogrpg = ogrpg + " port={}".format(port)
+          if user is not None:
+            ogrpg = ogrpg + " user={}".format(user)
+          if host is not None:
+            ogrpg = ogrpg + " host={}".format(host)
+
+          ogrpg = ogrpg + ""
+
+          ogrcommand = ["ogr2ogr",
+                        '-f', 'PostgreSQL',
+                        #'-select', 'FID',
+                        '-lco', 'GEOMETRY_NAME=way',
+                        '-lco', 'SPATIAL_INDEX=FALSE',
+                        '-lco', 'EXTRACT_SCHEMA_FROM_LAYER_NAME=YES',
+#                        '-lco', 'FID=fid',
+                        '-nln', "{}.{}".format(config["settings"]["temp_schema"], name),
+                        ogrpg, os.path.join(workingdir, source["file"])]
+          print ("running {}".format(subprocess.list2cmdline(ogrcommand)))
+
+          # need to catch errors here
+          try:
+            ogr2ogr = subprocess.run(ogrcommand, stderr=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, check=True)
+            print (ogr2ogr.stdout)
+          except subprocess.CalledProcessError as e:
+            print ("ogr2ogr returned {} with layer {}".format(e.returncode, name))
+            print ("Command line was {}".format(subprocess.list2cmdline(e.cmd)))
+            print ("Output was\n{}".format(e.output))
+            raise RuntimeError("Unable to load table {}".format(name))
+
+          with conn.cursor() as cur:
+            # ogr creates a ogc_fid column we don't need
+            cur.execute('''ALTER TABLE "{temp_schema}"."{name}" DROP COLUMN ogc_fid;'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
+
+            # sorting static tables helps performance and reduces size from the column drop above
+            # see osm2pgsql for why this particular geohash invocation
+            cur.execute('''CREATE INDEX "{name}_geohash"
+                            ON "{temp_schema}"."{name}"
+                            (ST_GeoHash(ST_Transform(ST_Envelope(way),4326),10) COLLATE "C")'''
+                          .format(name=name, temp_schema=config["settings"]["temp_schema"]))
+            cur.execute('''CLUSTER "{temp_schema}"."{name}" USING "{name}_geohash"'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
+            cur.execute('''DROP INDEX "{temp_schema}"."{name}_geohash"'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
+
+            # Standard geom index
+            cur.execute('''CREATE INDEX ON "{temp_schema}"."{name}" USING GIST (way) WITH (fillfactor=100)'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
+            cur.execute('''ANALYZE "{temp_schema}"."{name}"'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
+          conn.commit()
+
+          with conn.cursor() as cur:
+            cur.execute('''BEGIN;''')
+            cur.execute('''DROP TABLE IF EXISTS "{schema}"."{name}"'''.format(name=name, schema=config["settings"]["schema"]))
+            cur.execute('''DROP TABLE IF EXISTS "{schema}"."{name}"'''.format(name=name, schema=config["settings"]["schema"]))
+            cur.execute('''ALTER TABLE "{temp_schema}"."{name}" SET SCHEMA "{schema}"'''
+              .format(name=name, temp_schema=config["settings"]["temp_schema"], schema=config["settings"]["schema"]))
+
+            # We checked if the metadata table had this table way up above
+            if last_modified is None:
+              cur.execute('''INSERT INTO "{schema}"."{metadata_table}" (name, last_modified) VALUES (%s, %s)'''.format_map(config["settings"]),
+                            [name, new_last_modified])
+            else:
+              cur.execute('''UPDATE "{schema}"."{metadata_table}" SET last_modified = %s WHERE name = %s'''.format_map(config["settings"]),
+                            [name, new_last_modified])
+          conn.commit()
         else:
           print("Table {} did not require updating".format(name))
-        
-        # http://docs.python-requests.org/en/master/user/quickstart/#raw-response-content for saving a file
