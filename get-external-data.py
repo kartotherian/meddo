@@ -144,15 +144,11 @@ if __name__ == '__main__':
           if host is not None:
             ogrpg = ogrpg + " host={}".format(host)
 
-          ogrpg = ogrpg + ""
-
           ogrcommand = ["ogr2ogr",
                         '-f', 'PostgreSQL',
-                        #'-select', 'FID',
                         '-lco', 'GEOMETRY_NAME=way',
                         '-lco', 'SPATIAL_INDEX=FALSE',
                         '-lco', 'EXTRACT_SCHEMA_FROM_LAYER_NAME=YES',
-#                        '-lco', 'FID=fid',
                         '-nln', "{}.{}".format(config["settings"]["temp_schema"], name),
                         ogrpg, os.path.join(workingdir, source["file"])]
           print ("running {}".format(subprocess.list2cmdline(ogrcommand)))
