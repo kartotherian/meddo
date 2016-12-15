@@ -32,6 +32,20 @@ def database_setup(conn, temp_schema, schema, metadata_table):
       cur.execute('''CREATE TABLE IF NOT EXISTS "{schema}"."{metadata_table}" (name text primary key, last_modified text);'''
                     .format(schema=schema, metadata_table=metadata_table))
   conn.commit()
+
+def table_init(conn, name, temp_schema):
+  with conn.cursor() as cur:
+    cur.execute('''DROP TABLE IF EXISTS "{temp_schema}"."{name}"'''.format(name=name, temp_schema=temp_schema))
+  conn.commit()
+
+def table_lastmodified(conn, name, schema, metadata_table):
+  with conn.cursor() as cur:
+    cur.execute('''SELECT last_modified FROM "{schema}"."{metadata_table}" WHERE name = %s'''.format(schema=schema, metadata_table=metadata_table), [name])
+    results = cur.fetchone()
+    if results is not None:
+      return results[0]
+
+
 def table_index(conn, name, temp_schema):
   with conn.cursor() as cur:
     # ogr creates a ogc_fid column we don't need
@@ -111,19 +125,10 @@ if __name__ == '__main__':
 
         os.makedirs(workingdir, exist_ok=True)
 
-        with conn.cursor() as cur:
-          cur.execute('''DROP TABLE IF EXISTS "{}"."{}"'''.format(config["settings"]["temp_schema"],name))
-          # should lock the row for update
-          cur.execute('''SELECT last_modified FROM "{schema}"."{metadata_table}" WHERE name = %s'''.format_map(config["settings"]), [name])
-          results = cur.fetchone()
-          if results is not None:
-            last_modified = results[0]
-          else:
-            last_modified = None
-        conn.commit()
+        table_init(conn, name, config["settings"]["temp_schema"])
 
         if not opts.force:
-          headers = {'If-Modified-Since': last_modified}
+          headers = {'If-Modified-Since': table_lastmodified(conn, name, config["settings"]["schema"], config["settings"]["metadata_table"])}
         else:
           headers = {}
 
