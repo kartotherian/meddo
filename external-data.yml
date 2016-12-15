@@ -6,15 +6,32 @@ settings:
   metadata_table: external_data
 sources:
   simplified_ocean_polygons:
+    # The type of file this source is
     type: shp
+    # Where to get it (localhost for now)
+    # http://data.openstreetmapdata.com/simplified-water-polygons-complete-3857.zip
+    url: http://127.0.0.1/simplified-water-polygons-complete-3857.zip
+    # The location within the archive
     file: simplified-water-polygons-complete-3857/simplified_water_polygons.shp
     archive:
       format: zip
+      # Files to extract from the archive
       files:
         - simplified-water-polygons-complete-3857/simplified_water_polygons.cpg
         - simplified-water-polygons-complete-3857/simplified_water_polygons.dbf
         - simplified-water-polygons-complete-3857/simplified_water_polygons.prj
         - simplified-water-polygons-complete-3857/simplified_water_polygons.shp
         - simplified-water-polygons-complete-3857/simplified_water_polygons.shx
-    url: http://127.0.0.1/simplified-water-polygons-complete-3857.zip
-  
+  ocean_polygons:
+    type: shp
+    # http://data.openstreetmapdata.com/water-polygons-split-3857.zip
+    url: http://127.0.0.1/water-polygons-split-3857.zip
+    file: water-polygons-split-3857/water_polygons.shp
+    archive:
+      format: zip
+      files:
+        - water-polygons-split-3857/water_polygons.cpg
+        - water-polygons-split-3857/water_polygons.dbf
+        - water-polygons-split-3857/water_polygons.prj
+        - water-polygons-split-3857/water_polygons.shp
+        - water-polygons-split-3857/water_polygons.shx
