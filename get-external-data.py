@@ -70,7 +70,7 @@ class Table:
       # Standard geom index
       cur.execute('''CREATE INDEX ON "{temp_schema}"."{name}" USING GIST (way) WITH (fillfactor=100)'''.format(name=self._name, temp_schema=self._temp_schema))
       cur.execute('''ANALYZE "{temp_schema}"."{name}"'''.format(name=self._name, temp_schema=self._temp_schema))
-    conn.commit()
+    self._conn.commit()
 
   def replace(self, new_last_modified):
     with self._conn.cursor() as cur:
@@ -87,9 +87,9 @@ class Table:
       else:
         cur.execute('''UPDATE "{schema}"."{metadata_table}" SET last_modified = %s WHERE name = %s'''.format(schema=self._dst_schema, metadata_table=self._metadata_table),
                       [new_last_modified, self._name])
-    conn.commit()
+    self._conn.commit()
 
-if __name__ == '__main__':
+def main():
   # parse options
   parser = argparse.ArgumentParser(description="Load external data into a database")
   
@@ -185,3 +185,7 @@ if __name__ == '__main__':
           this_table.replace(new_last_modified)
         else:
           print("Table {} did not require updating".format(name))
+
+
+if __name__ == '__main__':
+  main()
