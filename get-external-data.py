@@ -25,6 +25,41 @@ import psycopg2
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
 
+def table_index(conn, name, temp_schema):
+  with conn.cursor() as cur:
+    # ogr creates a ogc_fid column we don't need
+    cur.execute('''ALTER TABLE "{temp_schema}"."{name}" DROP COLUMN ogc_fid;'''.format(name=name, temp_schema=temp_schema))
+
+    # sorting static tables helps performance and reduces size from the column drop above
+    # see osm2pgsql for why this particular geohash invocation
+    cur.execute('''CREATE INDEX "{name}_geohash"
+                    ON "{temp_schema}"."{name}"
+                    (ST_GeoHash(ST_Transform(ST_Envelope(way),4326),10) COLLATE "C")'''
+                  .format(name=name, temp_schema=temp_schema))
+    cur.execute('''CLUSTER "{temp_schema}"."{name}" USING "{name}_geohash"'''.format(name=name, temp_schema=temp_schema))
+    cur.execute('''DROP INDEX "{temp_schema}"."{name}_geohash"'''.format(name=name, temp_schema=temp_schema))
+
+    # Standard geom index
+    cur.execute('''CREATE INDEX ON "{temp_schema}"."{name}" USING GIST (way) WITH (fillfactor=100)'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
+    cur.execute('''ANALYZE "{temp_schema}"."{name}"'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
+  conn.commit()
+
+def table_replace(conn, name, metadata_table, temp_schema, schema, new_last_modified):
+  with conn.cursor() as cur:
+    cur.execute('''BEGIN;''')
+    cur.execute('''DROP TABLE IF EXISTS "{schema}"."{name}"'''.format(name=name, schema=schema))
+    cur.execute('''ALTER TABLE "{temp_schema}"."{name}" SET SCHEMA "{schema}"'''
+      .format(name=name, temp_schema=temp_schema, schema=schema))
+
+    # We checked if the metadata table had this table way up above
+    if last_modified is None:
+      cur.execute('''INSERT INTO "{schema}"."{metadata_table}" (name, last_modified) VALUES (%s, %s)'''.format(schema=schema, metadata_table=metadata_table),
+                    [name, new_last_modified])
+    else:
+      cur.execute('''UPDATE "{schema}"."{metadata_table}" SET last_modified = %s WHERE name = %s'''.format(schema=schema, metadata_table=metadata_table),
+                    [new_last_modified, name])
+  conn.commit()
+
 if __name__ == '__main__':
   # parse options
   parser = argparse.ArgumentParser(description="Load external data into a database")
@@ -130,38 +165,7 @@ if __name__ == '__main__':
             print ("Output was\n{}".format(e.output))
             raise RuntimeError("Unable to load table {}".format(name))
 
-          with conn.cursor() as cur:
-            # ogr creates a ogc_fid column we don't need
-            cur.execute('''ALTER TABLE "{temp_schema}"."{name}" DROP COLUMN ogc_fid;'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
-
-            # sorting static tables helps performance and reduces size from the column drop above
-            # see osm2pgsql for why this particular geohash invocation
-            cur.execute('''CREATE INDEX "{name}_geohash"
-                            ON "{temp_schema}"."{name}"
-                            (ST_GeoHash(ST_Transform(ST_Envelope(way),4326),10) COLLATE "C")'''
-                          .format(name=name, temp_schema=config["settings"]["temp_schema"]))
-            cur.execute('''CLUSTER "{temp_schema}"."{name}" USING "{name}_geohash"'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
-            cur.execute('''DROP INDEX "{temp_schema}"."{name}_geohash"'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
-
-            # Standard geom index
-            cur.execute('''CREATE INDEX ON "{temp_schema}"."{name}" USING GIST (way) WITH (fillfactor=100)'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
-            cur.execute('''ANALYZE "{temp_schema}"."{name}"'''.format(name=name, temp_schema=config["settings"]["temp_schema"]))
-          conn.commit()
-
-          with conn.cursor() as cur:
-            cur.execute('''BEGIN;''')
-            cur.execute('''DROP TABLE IF EXISTS "{schema}"."{name}"'''.format(name=name, schema=config["settings"]["schema"]))
-            cur.execute('''DROP TABLE IF EXISTS "{schema}"."{name}"'''.format(name=name, schema=config["settings"]["schema"]))
-            cur.execute('''ALTER TABLE "{temp_schema}"."{name}" SET SCHEMA "{schema}"'''
-              .format(name=name, temp_schema=config["settings"]["temp_schema"], schema=config["settings"]["schema"]))
-
-            # We checked if the metadata table had this table way up above
-            if last_modified is None:
-              cur.execute('''INSERT INTO "{schema}"."{metadata_table}" (name, last_modified) VALUES (%s, %s)'''.format_map(config["settings"]),
-                            [name, new_last_modified])
-            else:
-              cur.execute('''UPDATE "{schema}"."{metadata_table}" SET last_modified = %s WHERE name = %s'''.format_map(config["settings"]),
-                            [name, new_last_modified])
-          conn.commit()
+          table_index(conn, name, config["settings"]["temp_schema"])
+          table_replace(conn, name, config["settings"]["metadata_table"], config["settings"]["temp_schema"], config["settings"]["schema"], new_last_modified)
         else:
           print("Table {} did not require updating".format(name))
