@@ -35,7 +35,7 @@ Layer:
           WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
         UNION ALL
         SELECT
-            geom AS way
+            way
           FROM ocean_polygons
         ) AS water
   - id: waterway
