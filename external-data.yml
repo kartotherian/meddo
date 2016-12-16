@@ -8,9 +8,8 @@ sources:
   simplified_ocean_polygons:
     # The type of file this source is
     type: shp
-    # Where to get it (localhost for now)
-    # http://data.openstreetmapdata.com/simplified-water-polygons-complete-3857.zip
-    url: http://127.0.0.1/simplified-water-polygons-complete-3857.zip
+    # Where to get it
+    url: http://data.openstreetmapdata.com/simplified-water-polygons-complete-3857.zip
     # The location within the archive
     file: simplified-water-polygons-complete-3857/simplified_water_polygons.shp
     archive:
@@ -24,8 +23,7 @@ sources:
         - simplified-water-polygons-complete-3857/simplified_water_polygons.shx
   ocean_polygons:
     type: shp
-    # http://data.openstreetmapdata.com/water-polygons-split-3857.zip
-    url: http://127.0.0.1/water-polygons-split-3857.zip
+    url: http://data.openstreetmapdata.com/water-polygons-split-3857.zip
     file: water-polygons-split-3857/water_polygons.shp
     archive:
       format: zip
@@ -37,8 +35,7 @@ sources:
         - water-polygons-split-3857/water_polygons.shx
   ne_ocean:
     type: shp
-    # http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/physical/ne_50m_ocean.zip
-    url: http://127.0.0.1/ne_50m_ocean.zip
+    url: http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/physical/ne_50m_ocean.zip
     file: ne_50m_ocean.shp
     ogropts: &ne_opts
       - "-explodecollections"
@@ -60,8 +57,7 @@ sources:
         - ne_50m_ocean.shx
   ne_lake:
     type: shp
-    # http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/physical/ne_50m_lakes.zip
-    url: http://127.0.0.1/ne_50m_lakes.zip
+    url: http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/physical/ne_50m_lakes.zip
     file: ne_50m_lakes.shp
     ogropts: *ne_opts
     archive:
