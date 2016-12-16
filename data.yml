@@ -33,10 +33,17 @@ Layer:
             way
           FROM water_areas
           WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+            AND z(!scale_denominator!) >= 6
         UNION ALL
         SELECT
             way
           FROM ocean_polygons
+          WHERE z(!scale_denominator!) >= 10
+        UNION ALL
+        SELECT
+            way
+          FROM simplified_ocean_polygons
+          WHERE z(!scale_denominator!) < 10
         ) AS water
   - id: waterway
     geometry: linestring
