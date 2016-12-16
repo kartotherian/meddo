@@ -33,10 +33,28 @@ Layer:
             way
           FROM water_areas
           WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+            AND z(!scale_denominator!) >= 5
         UNION ALL
         SELECT
-            geom AS way
+            way
           FROM ocean_polygons
+          WHERE z(!scale_denominator!) >= 10
+        UNION ALL
+        SELECT
+            way
+          FROM simplified_ocean_polygons
+          WHERE z(!scale_denominator!) < 10 AND z(!scale_denominator!) >= 5
+        -- Switch to NE for very low zoom
+        UNION ALL
+        SELECT
+            way
+          FROM ne_ocean
+          WHERE z(!scale_denominator!) < 5
+        UNION ALL
+        SELECT
+            way
+          FROM ne_lake
+          WHERE z(!scale_denominator!) < 5
         ) AS water
   - id: waterway
     geometry: linestring
