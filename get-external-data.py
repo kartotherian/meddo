@@ -166,8 +166,13 @@ def main():
                         '-lco', 'GEOMETRY_NAME=way',
                         '-lco', 'SPATIAL_INDEX=FALSE',
                         '-lco', 'EXTRACT_SCHEMA_FROM_LAYER_NAME=YES',
-                        '-nln', "{}.{}".format(config["settings"]["temp_schema"], name),
-                        ogrpg, os.path.join(workingdir, source["file"])]
+                        '-nln', "{}.{}".format(config["settings"]["temp_schema"], name)]
+
+          if "ogropts" in source:
+            ogrcommand += source["ogropts"]
+
+          ogrcommand += [ogrpg, os.path.join(workingdir, source["file"])]
+
           print ("running {}".format(subprocess.list2cmdline(ogrcommand)))
 
           # need to catch errors here
