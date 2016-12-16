@@ -35,3 +35,39 @@ sources:
         - water-polygons-split-3857/water_polygons.prj
         - water-polygons-split-3857/water_polygons.shp
         - water-polygons-split-3857/water_polygons.shx
+  ne_ocean:
+    type: shp
+    # http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/physical/ne_50m_ocean.zip
+    url: http://127.0.0.1/ne_50m_ocean.zip
+    file: ne_50m_ocean.shp
+    ogropts: &ne_opts
+      - "-explodecollections"
+      # needs reprojecting
+      - '-t_srs'
+      - 'EPSG:3857'
+      - "-clipsrc"
+      # clip so postgis doesn't have geohash errors
+      - "-179.999999999"
+      - "-85.05112877980659"
+      - "179.999999999"
+      - "85.05112877980659"
+    archive:
+      format: zip
+      files:
+        - ne_50m_ocean.dbf
+        - ne_50m_ocean.prj
+        - ne_50m_ocean.shp
+        - ne_50m_ocean.shx
+  ne_lake:
+    type: shp
+    # http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/physical/ne_50m_lakes.zip
+    url: http://127.0.0.1/ne_50m_lakes.zip
+    file: ne_50m_lakes.shp
+    ogropts: *ne_opts
+    archive:
+      format: zip
+      files:
+        - ne_50m_lakes.dbf
+        - ne_50m_lakes.prj
+        - ne_50m_lakes.shp
+        - ne_50m_lakes.shx
