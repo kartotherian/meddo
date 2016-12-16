@@ -46,12 +46,10 @@ attempt to use as many processes as hardware threads.
 
 ### Load coastline data
 
-Meddo uses data from [OSMCoastline](https://github.com/osmcode/osmcoastline), hosted on [OpenStreetMapData](http://openstreetmapdata.com/). The data used is
-
-* Mercator projected [water polygons](http://openstreetmapdata.com/data/water-polygons)
+Meddo uses data from [OSMCoastline](https://github.com/osmcode/osmcoastline), hosted on [OpenStreetMapData](http://openstreetmapdata.com/), and from [Natural Earth](http://www.naturalearthdata.com/). The data used is documented in full in [`external-data.yml`](external-data.yml)
 
 ```sh
-./get-shapefiles.sh
+./get-external-data.py
 ```
 
 ### Load admin data
