@@ -121,6 +121,7 @@ def main():
       database_setup(conn, config["settings"]["temp_schema"], config["settings"]["schema"], config["settings"]["metadata_table"])
 
       for name, source in config["sources"].items():
+        print ("Loading file {}".format(name))
         # Don't attempt to handle strange names
         # you don't want them when writing a style with all the quoting headaches
         if not re.match('''^[a-zA-Z0-9_]+$''', name):
