@@ -296,3 +296,18 @@ Layer:
     properties:
       minzoom: 4
       buffer-size: 128
+  - id: landcover
+    geometry: polygon
+    properties:
+      minzoom: 5
+      buffer-size: 4
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            way,
+            'wood' AS class
+          FROM wood_area
+          WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+            AND z(!scale_denominator!) >= 5
+        ) AS landcover
