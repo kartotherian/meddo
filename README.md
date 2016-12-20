@@ -18,7 +18,7 @@ This style requires an osm2pgsql database loaded with [https://github.com/ClearT
 
 ### Load the data with ClearTables
 
-See the [ClearTables documentation for details](https://github.com/ClearTables/ClearTables#usage) and load into the database `ct`.
+See the [ClearTables documentation for details](https://github.com/ClearTables/ClearTables#usage) and load into the database `ct`, with the command-line option `-G`
 
 ```sh
 git clone -b v0.0.1 git://github.com/ClearTables/ClearTables.git
@@ -27,7 +27,7 @@ make
 createdb ct
 psql -d ct -c 'CREATE EXTENSION postgis; CREATE EXTENSION hstore;'
 cat sql/types/*.sql | psql -1Xq -d ct
-osm2pgsql -d ct --number-processes 3 --output multi --style cleartables.json ~/path/to/extract
+osm2pgsql -G -d ct --number-processes 3 --output multi --style cleartables.json ~/path/to/extract
 cat sql/post/*.sql | psql -1Xq -d ct
 popd
 ```
