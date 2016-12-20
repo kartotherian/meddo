@@ -168,7 +168,7 @@ Layer:
                   OR class >= 'minor' AND z(!scale_denominator!) >= 12
                   OR class >= 'service' AND z(!scale_denominator!) >= 14
                   OR z(!scale_denominator!) >= 14
-                )
+                ) AND NOT (ramp AND z(!scale_denominator!) < 10)
             UNION ALL
             SELECT
                 way,
