@@ -247,51 +247,71 @@ Layer:
             NULL::int AS rank
           FROM
             (SELECT
-                DISTINCT ON (ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8))
                 *
               FROM
-                (SELECT
-                    way,
-                    osm_id,
-                    name,
-                    class,
-                    rank,
-                    population,
-                    NULL::real AS way_area
-                  FROM place_point
-                UNION ALL
-                SELECT
-                    ST_PointOnSurface(way),
-                    osm_id,
-                    name,
-                    class,
-                    rank,
-                    population,
-                    way_area
-                  FROM place_polygon
-                  WHERE way && !bbox! -- filter pre ST_PointOnSurface
-              ) place_all
-              WHERE way && !bbox! -- filter points and post ST_PointOnSurface
-                AND name IS NOT NULL
-                AND (rank >= 'city'
-                  OR (z(!scale_denominator!) >= 6 AND rank >='town' AND class = 'settlement')
-                  OR (z(!scale_denominator!) >= 8 AND rank >='village' AND class = 'settlement')
-                  OR (z(!scale_denominator!) >= 10 AND rank >='hamlet' AND class = 'settlement'))
-                   -- todo: add subregions
-              ORDER BY
-                ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
-                rank DESC NULLS LAST,
-                population DESC NULLS LAST,
-                way_area DESC NULLS LAST,
-                length(name) DESC,
-                name
-            ) AS place_gridded
-          ORDER BY
-            rank DESC NULLS LAST,
-            population DESC NULLS LAST,
-            way_area DESC NULLS LAST,
-            length(name) DESC,
-            name
+              (SELECT
+                  DISTINCT ON (ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8))
+                  *
+                FROM
+                  (SELECT -- points for geographic places
+                      way,
+                      osm_id,
+                      name,
+                      class,
+                      rank,
+                      population,
+                      NULL::real AS way_area
+                    FROM place_point
+                  UNION ALL
+                  SELECT -- polygons for geographic places
+                      ST_PointOnSurface(way) way,
+                      osm_id,
+                      name,
+                      class,
+                      rank,
+                      population,
+                      way_area
+                    FROM place_polygon
+                    WHERE way && !bbox! -- filter pre ST_PointOnSurface
+                ) place_geographic
+                WHERE way && !bbox! -- filter points and ways after ST_PointOnSurface
+                  AND name IS NOT NULL
+                  AND (rank >= 'city'
+                    OR (z(!scale_denominator!) >= 6 AND rank >='town' AND class = 'settlement')
+                    OR (z(!scale_denominator!) >= 8 AND rank >='village' AND class = 'settlement')
+                    OR (z(!scale_denominator!) >= 10 AND rank >='hamlet' AND class = 'settlement'))
+                     -- todo: add subregions
+                ORDER BY
+                  ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
+                  rank DESC NULLS LAST,
+                  population DESC NULLS LAST,
+                  way_area DESC NULLS LAST,
+                  length(name) DESC,
+                  name
+              ) AS place_gridded
+            ORDER BY
+              rank DESC NULLS LAST,
+              population DESC NULLS LAST,
+              way_area DESC NULLS LAST,
+              length(name) DESC,
+              name
+            ) AS place_filtered
+        UNION ALL
+        SELECT
+            ST_PointOnSurface(way) way,
+            name,
+            CASE
+              WHEN level = 2 THEN 'country'
+              WHEN level = 4 THEN 'state'
+              ELSE NULL END
+              AS class,
+            NULL::bool AS capital,
+            NULL::int AS rank
+          FROM admin_area
+          WHERE way && !bbox!
+            AND ST_PointOnSurface(way) && !bbox!
+            AND name IS NOT NULL
+            AND level IN (2, 4)
         ) AS place
     properties:
       minzoom: 4
