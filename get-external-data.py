@@ -178,7 +178,7 @@ def main():
 
           # need to catch errors here
           try:
-            ogr2ogr = subprocess.run(ogrcommand, stderr=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, check=True)
+            ogr2ogr = subprocess.check_output(ogrcommand, stderr=subprocess.PIPE, universal_newlines=True)
           except subprocess.CalledProcessError as e:
             print ("ogr2ogr returned {} with layer {}".format(e.returncode, name))
             print ("Command line was {}".format(subprocess.list2cmdline(e.cmd)))
