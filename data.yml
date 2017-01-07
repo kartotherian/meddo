@@ -330,4 +330,11 @@ Layer:
           FROM wood_area
           WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
             AND z(!scale_denominator!) >= 5
+        UNION ALL
+        SELECT
+            way,
+            'park' AS class
+          FROM recreation_polygon
+          WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+            AND z(!scale_denominator!) >= 11
         ) AS landcover

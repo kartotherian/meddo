@@ -8,7 +8,7 @@ This style requires an osm2pgsql database loaded with [https://github.com/ClearT
 
 ### Requirements
 
-* ClearTables v0.0.3
+* ClearTables v0.0.4
   The version required is subject to **rapid** change during development
 * Mapnik 3.0.0 or later
 * Software that can interpret YAML style definitions like Kosmtik or Mapbox Studio Classic
