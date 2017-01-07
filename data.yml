@@ -279,8 +279,8 @@ Layer:
                   AND (rank >= 'city' AND class = 'settlement'
                     OR (z(!scale_denominator!) >= 6 AND rank >='town' AND class = 'settlement')
                     OR (z(!scale_denominator!) >= 8 AND rank >='village' AND class = 'settlement')
-                    OR (z(!scale_denominator!) >= 10 AND rank >='hamlet' AND class = 'settlement'))
-                     -- todo: add subregions
+                    OR (z(!scale_denominator!) >= 10 AND rank >='hamlet' AND class = 'settlement')
+                    OR (z(!scale_denominator!) >= 13 AND rank >='neighbourhood' AND class = 'subregion'))
                 ORDER BY
                   ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
                   rank DESC NULLS LAST,
