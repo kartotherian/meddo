@@ -221,7 +221,7 @@ Layer:
                   class >= 'motorway'
                   OR class >= 'primary' AND z(!scale_denominator!) >= 7
                   OR class >= 'tertiary' AND z(!scale_denominator!) >= 9
-                  OR class >= 'minor' AND z(!scale_denominator!) >= 12
+                  OR class >= 'minor' AND z(!scale_denominator!) >= 14
                   OR class >= 'service' AND z(!scale_denominator!) >= 14
                   OR z(!scale_denominator!) >= 14
                 )
