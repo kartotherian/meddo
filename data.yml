@@ -325,16 +325,25 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
-            way,
-            'wood' AS class
-          FROM wood_area
-          WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
-            AND z(!scale_denominator!) >= 5
-        UNION ALL
-        SELECT
-            way,
-            'park' AS class
-          FROM recreation_polygon
-          WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
-            AND z(!scale_denominator!) >= 11
+            way, class
+          FROM (SELECT
+              way,
+              'wood' AS class,
+              10 AS prio,
+              way_area
+            FROM wood_area
+            WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+              AND z(!scale_denominator!) >= 5
+          UNION ALL
+          SELECT
+              way,
+              'park' AS class,
+              5 AS prio,
+              way_area
+            FROM recreation_polygon
+            WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+              AND z(!scale_denominator!) >= 11) AS features
+        ORDER BY
+          prio,
+          way_area DESC
         ) AS landcover
