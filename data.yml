@@ -192,7 +192,7 @@ Layer:
               FROM road_areas
               WHERE way && !bbox!
               ) AS t
-          ORDER BY layer, ramp DESC, class, way_area DESC NULLS LAST
+          ORDER BY layer, ramp DESC, class DESC, way_area DESC NULLS LAST
         ) AS transport
     properties:
       minzoom: 5
