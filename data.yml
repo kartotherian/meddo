@@ -347,3 +347,19 @@ Layer:
           prio,
           way_area DESC
         ) AS landcover
+  - id: landuse
+    geometry: polygon
+    properties:
+      minzoom: 12
+      buffer-size: 4
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            way,
+            'hospital' AS class
+          FROM healthcare_polygon
+          WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+            AND healthcare = 'hospital'
+            AND z(!scale_denominator!) >= 12
+        ) AS landuse
