@@ -329,7 +329,7 @@ Layer:
           FROM (SELECT
               way,
               'wood' AS class,
-              10 AS prio,
+              20 AS prio,
               way_area
             FROM wood_area
             WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
@@ -338,13 +338,14 @@ Layer:
           SELECT
               way,
               'park' AS class,
-              5 AS prio,
+              10 AS prio,
               way_area
             FROM recreation_polygon
             WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
-              AND z(!scale_denominator!) >= 11) AS features
+              AND z(!scale_denominator!) >= 11
+        ) AS features
         ORDER BY
-          prio,
+          prio DESC,
           way_area DESC
         ) AS landcover
   - id: landuse
@@ -361,7 +362,9 @@ Layer:
           FROM (
             SELECT
                 way,
-                'hospital' AS class
+                'hospital' AS class,
+                20 as prio,
+                way_area
               FROM healthcare_polygon
               WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
                 AND healthcare = 'hospital'
@@ -369,7 +372,9 @@ Layer:
             UNION ALL
             SELECT
                 way,
-                education::text
+                education::text AS class,
+                10 as prio,
+                way_area
               FROM education_polygon
               WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
                 AND (education = 'school' AND z(!scale_denominator!) >= 13
@@ -378,4 +383,7 @@ Layer:
                   OR education = 'college' AND z(!scale_denominator!) >= 11
                   OR education = 'library' AND z(!scale_denominator!) >= 14)
           ) AS features
+          ORDER BY
+            prio DESC,
+            way_area DESC
         ) AS landuse
