@@ -357,9 +357,25 @@ Layer:
       table: |-
         (SELECT
             way,
-            'hospital' AS class
-          FROM healthcare_polygon
-          WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
-            AND healthcare = 'hospital'
-            AND z(!scale_denominator!) >= 12
+            class
+          FROM (
+            SELECT
+                way,
+                'hospital' AS class
+              FROM healthcare_polygon
+              WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+                AND healthcare = 'hospital'
+                AND z(!scale_denominator!) >= 12
+            UNION ALL
+            SELECT
+                way,
+                education::text
+              FROM education_polygon
+              WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+                AND (education = 'school' AND z(!scale_denominator!) >= 13
+                  OR education = 'university' AND z(!scale_denominator!) >= 11
+                  OR education = 'kindergarten' AND z(!scale_denominator!) >= 14
+                  OR education = 'college' AND z(!scale_denominator!) >= 11
+                  OR education = 'library' AND z(!scale_denominator!) >= 14)
+          ) AS features
         ) AS landuse
