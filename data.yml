@@ -387,3 +387,38 @@ Layer:
             prio DESC,
             way_area DESC
         ) AS landuse
+  - id: transit_stop
+    geometry: point
+    properties:
+      minzoom: 10
+      buffer-size: 4
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            way,
+            transit_mode::text AS mode,
+            station
+          FROM (
+            SELECT
+                way,
+                transit_mode,
+                station
+              FROM transit_point
+          ) AS features
+          WHERE way && !bbox!
+            AND (transit_mode = 'ferry' AND z(!scale_denominator!) >= 10
+              OR transit_mode = 'rail' AND station AND z(!scale_denominator!) >= 10
+              OR transit_mode = 'rail' AND NOT station AND z(!scale_denominator!) >= 13
+              OR transit_mode = 'bus' AND station AND z(!scale_denominator!) >= 13
+              OR transit_mode = 'bus' AND NOT station AND z(!scale_denominator!) >= 15
+              OR transit_mode = 'taxi' AND z(!scale_denominator!) >= 14)
+          ORDER BY
+            mode DESC,
+            CASE
+              WHEN transit_mode = 'ferry' THEN 1
+              WHEN transit_mode = 'rail' THEN 2
+              WHEN transit_mode = 'taxi' THEN 3
+              WHEN transit_mode = 'bus' THEN 4
+              ELSE NULL END
+        ) AS transit_stop
