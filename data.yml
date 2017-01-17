@@ -12,7 +12,7 @@ center:
   - 0
   - 4
 minzoom: 0
-maxzoom: 16
+maxzoom: 16 # For development, otherwise 15
 _parts:
   osm2pgsql: &osm2pgsql
     type: postgis
