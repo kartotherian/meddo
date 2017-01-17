@@ -414,7 +414,7 @@ Layer:
               OR transit_mode = 'bus' AND NOT station AND z(!scale_denominator!) >= 15
               OR transit_mode = 'taxi' AND z(!scale_denominator!) >= 14)
           ORDER BY
-            mode DESC,
+            station DESC,
             CASE
               WHEN transit_mode = 'ferry' THEN 1
               WHEN transit_mode = 'rail' THEN 2
