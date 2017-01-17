@@ -397,14 +397,23 @@ Layer:
       table: |-
         (SELECT
             way,
-            transit_mode::text AS mode,
+            transit_mode::text AS "mode",
             station
           FROM (
             SELECT
                 way,
                 transit_mode,
-                station
+                station,
+                NULL::real AS way_area
               FROM transit_point
+            UNION ALL
+            SELECT
+                ST_PointOnSurface(way) AS way,
+                transit_mode,
+                station,
+                way_area
+              FROM transit_polygon
+              WHERE way && !bbox!
           ) AS features
           WHERE way && !bbox!
             AND (transit_mode = 'ferry' AND z(!scale_denominator!) >= 10
@@ -420,5 +429,6 @@ Layer:
               WHEN transit_mode = 'rail' THEN 2
               WHEN transit_mode = 'taxi' THEN 3
               WHEN transit_mode = 'bus' THEN 4
-              ELSE NULL END
+              ELSE NULL END,
+            way_area DESC NULLS LAST
         ) AS transit_stop
