@@ -38,6 +38,9 @@ sources:
     url: http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/physical/ne_50m_ocean.zip
     file: ne_50m_ocean.shp
     ogropts: &ne_opts
+      - "--config"
+      - "SHAPE_ENCODING"
+      - "WINDOWS-1252"
       - "-explodecollections"
       # needs reprojecting
       - '-t_srs'

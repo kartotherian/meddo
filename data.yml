@@ -276,7 +276,7 @@ Layer:
                 ) place_geographic
                 WHERE way && !bbox! -- filter points and ways after ST_PointOnSurface
                   AND name IS NOT NULL
-                  AND (rank >= 'city' AND class = 'settlement'
+                  AND (z(!scale_denominator!) >= 6 AND rank >= 'city' AND class = 'settlement'
                     OR z(!scale_denominator!) >= 6 AND rank >= 'town' AND class = 'settlement'
                     OR z(!scale_denominator!) >= 8 AND rank >= 'village' AND class = 'settlement'
                     OR z(!scale_denominator!) >= 10 AND rank >= 'hamlet' AND class = 'settlement'
@@ -288,14 +288,34 @@ Layer:
                   way_area DESC NULLS LAST,
                   length(name) DESC,
                   name
-              ) AS place_gridded
+              ) AS osm_place_gridded
             ORDER BY
               rank DESC NULLS LAST,
               population DESC NULLS LAST,
               way_area DESC NULLS LAST,
               length(name) DESC,
               name
-            ) AS place_filtered
+            ) AS osm_place_filtered
+        UNION ALL
+        SELECT
+            way,
+            name,
+            'city' AS class,
+            NULL::bool AS capital,
+            NULL::int AS rank
+          FROM
+          (SELECT * FROM ne_places
+            WHERE way && !bbox!
+              AND z(!scale_denominator!) < 6
+              AND (z(!scale_denominator!) >= 5 AND scalerank < 4
+                OR z(!scale_denominator!) >= 4 AND scalerank < 3
+                OR z(!scale_denominator!) >= 3 AND scalerank < 2)
+            ORDER BY labelrank ASC,
+              scalerank ASC,
+              natscale DESC,
+              pop_max DESC,
+              name
+          ) AS ne_place
         UNION ALL
         SELECT
             ST_PointOnSurface(way) way,
@@ -314,7 +334,7 @@ Layer:
             AND level IN (2, 4)
         ) AS place
     properties:
-      minzoom: 4
+      minzoom: 2
       buffer-size: 128
   - id: landcover
     geometry: polygon
