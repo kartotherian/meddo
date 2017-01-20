@@ -277,10 +277,10 @@ Layer:
                 WHERE way && !bbox! -- filter points and ways after ST_PointOnSurface
                   AND name IS NOT NULL
                   AND (rank >= 'city' AND class = 'settlement'
-                    OR (z(!scale_denominator!) >= 6 AND rank >= 'town' AND class = 'settlement')
-                    OR (z(!scale_denominator!) >= 8 AND rank >= 'village' AND class = 'settlement')
-                    OR (z(!scale_denominator!) >= 10 AND rank >= 'hamlet' AND class = 'settlement')
-                    OR (z(!scale_denominator!) >= 13 AND rank >= 'neighbourhood' AND class = 'subregion'))
+                    OR z(!scale_denominator!) >= 6 AND rank >= 'town' AND class = 'settlement'
+                    OR z(!scale_denominator!) >= 8 AND rank >= 'village' AND class = 'settlement'
+                    OR z(!scale_denominator!) >= 10 AND rank >= 'hamlet' AND class = 'settlement'
+                    OR z(!scale_denominator!) >= 13 AND rank >= 'neighbourhood' AND class = 'subregion')
                 ORDER BY
                   ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
                   rank DESC NULLS LAST,
