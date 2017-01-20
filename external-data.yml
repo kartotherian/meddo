@@ -67,3 +67,15 @@ sources:
         - ne_50m_lakes.prj
         - ne_50m_lakes.shp
         - ne_50m_lakes.shx
+  ne_places:
+    type: shp
+    url: http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_populated_places_simple.zip
+    file: ne_10m_populated_places_simple.shp
+    ogropts: *ne_opts
+    archive:
+      format: zip
+      files:
+        - ne_10m_populated_places_simple.dbf
+        - ne_10m_populated_places_simple.prj
+        - ne_10m_populated_places_simple.shp
+        - ne_10m_populated_places_simple.shx
