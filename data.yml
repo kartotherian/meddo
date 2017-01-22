@@ -239,63 +239,68 @@ Layer:
     Datasource:
       <<: *osm2pgsql
       table: |-
-        (SELECT
+        (WITH osm_places AS ( -- Get all OSM data once, since it will be used in two parts of a UNION later
+          SELECT
+              *
+            FROM (
+              SELECT
+                  name,
+                  class,
+                  rank,
+                  population,
+                  way,
+                  NULL::real AS way_area
+                FROM place_point
+              UNION ALL
+              SELECT
+                  name,
+                  class,
+                  rank,
+                  population,
+                  way,
+                  way_area
+                FROM place_polygon) all_places
+            WHERE way && !bbox!
+              AND name IS NOT NULL
+              AND (z(!scale_denominator!) < 6 AND rank >= 'town' AND class = 'settlement' -- For joining with NE data
+                OR z(!scale_denominator!) >= 6 AND rank >= 'city' AND class = 'settlement'
+                OR z(!scale_denominator!) >= 6 AND rank >= 'town' AND class = 'settlement'
+                OR z(!scale_denominator!) >= 8 AND rank >= 'village' AND class = 'settlement'
+                OR z(!scale_denominator!) >= 10 AND rank >= 'hamlet' AND class = 'settlement'
+                OR z(!scale_denominator!) >= 13 AND rank >= 'neighbourhood' AND class = 'subregion')
+          )
+        SELECT
             way,
             name,
             rank::text AS class, -- TODO: use a case statement to do this properly
             NULL::bool AS capital,
             NULL::int AS rank
-          FROM
-            (SELECT
-                *
-              FROM
-              (SELECT
-                  DISTINCT ON (ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8))
-                  *
-                FROM
-                  (SELECT -- points for geographic places
-                      way,
-                      osm_id,
-                      name,
-                      class,
-                      rank,
-                      population,
-                      NULL::real AS way_area
-                    FROM place_point
-                  UNION ALL
-                  SELECT -- polygons for geographic places
-                      ST_PointOnSurface(way) way,
-                      osm_id,
-                      name,
-                      class,
-                      rank,
-                      population,
-                      way_area
-                    FROM place_polygon
-                    WHERE way && !bbox! -- filter pre ST_PointOnSurface
-                ) place_geographic
-                WHERE way && !bbox! -- filter points and ways after ST_PointOnSurface
-                  AND name IS NOT NULL
-                  AND (z(!scale_denominator!) >= 6 AND rank >= 'city' AND class = 'settlement'
-                    OR z(!scale_denominator!) >= 6 AND rank >= 'town' AND class = 'settlement'
-                    OR z(!scale_denominator!) >= 8 AND rank >= 'village' AND class = 'settlement'
-                    OR z(!scale_denominator!) >= 10 AND rank >= 'hamlet' AND class = 'settlement'
-                    OR z(!scale_denominator!) >= 13 AND rank >= 'neighbourhood' AND class = 'subregion')
-                ORDER BY
-                  ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
-                  rank DESC NULLS LAST,
-                  population DESC NULLS LAST,
-                  way_area DESC NULLS LAST,
-                  length(name) DESC,
-                  name
-              ) AS osm_place_gridded
-            ORDER BY
-              rank DESC NULLS LAST,
-              population DESC NULLS LAST,
-              way_area DESC NULLS LAST,
-              length(name) DESC,
-              name
-            ) AS osm_place_filtered
+          FROM ( -- The places have an ORDER BY so need a subselect
+            SELECT
+              DISTINCT ON (ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8))
+                way,
+                name,
+                rank
+              FROM (
+                SELECT
+                    ST_PointOnSurface(way) way,
+                    name,
+                    class,
+                    rank,
+                    population,
+                    way_area
+                  FROM osm_places
+                ) pp
+              WHERE way && !bbox! -- Refilter after PointOnSurface
+                AND z(!scale_denominator!) >= 6 -- Only do this for z6+
+              ORDER BY
+                ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
+                rank DESC NULLS LAST,
+                population DESC NULLS LAST,
+                way_area DESC NULLS LAST,
+                length(name) DESC,
+                name
+            ) gridded_osm_places
         UNION ALL
         SELECT
             way,
@@ -303,19 +308,23 @@ Layer:
             'city' AS class,
             NULL::bool AS capital,
             NULL::int AS rank
-          FROM
-          (SELECT * FROM ne_places
+          FROM (
+            SELECT
+              way,
+              name
+            FROM ne_places
             WHERE way && !bbox!
               AND z(!scale_denominator!) < 6
               AND (z(!scale_denominator!) >= 5 AND scalerank < 4
                 OR z(!scale_denominator!) >= 4 AND scalerank < 3
                 OR z(!scale_denominator!) >= 3 AND scalerank < 2)
-            ORDER BY labelrank ASC,
+            ORDER BY
+              labelrank ASC,
               scalerank ASC,
               natscale DESC,
               pop_max DESC,
               name
-          ) AS ne_place
+            ) ne_places
         UNION ALL
         SELECT
             ST_PointOnSurface(way) way,
