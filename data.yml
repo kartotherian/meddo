@@ -245,6 +245,7 @@ Layer:
             FROM (
               SELECT
                   name,
+                  names,
                   class,
                   rank,
                   population,
@@ -254,6 +255,7 @@ Layer:
               UNION ALL
               SELECT
                   name,
+                  names,
                   class,
                   rank,
                   population,
@@ -308,22 +310,31 @@ Layer:
             'city' AS class,
             NULL::bool AS capital,
             NULL::int AS rank
-          FROM (
+          FROM ( -- this subselect gets NE place names and tries to join them against OSM place names
             SELECT
-              way,
-              name
-            FROM ne_places
-            WHERE way && !bbox!
+              DISTINCT ON (ne.ctid)
+                COALESCE(ST_PointOnSurface(o.way), ne.way) AS way,
+                COALESCE(o.name, ne.name) AS name
+            FROM ne_places ne
+              LEFT JOIN osm_places o ON (
+                (lower(unaccent(o.name)) IN (lower(unaccent(ne.name)),
+                                            lower(unaccent(ne.namepar)),
+                                            lower(unaccent(ne.namealt)),
+                                            lower(unaccent(ne.nameascii)))
+                OR lower(unaccent(o.names->'en')) IN (lower(unaccent(ne.name)),
+                                            lower(unaccent(ne.namepar)),
+                                            lower(unaccent(ne.namealt)),
+                                            lower(unaccent(ne.nameascii))))
+                AND ST_DWithin(ne.way, o.way, 50000)
+              )
+            WHERE ne.way && !bbox!
               AND z(!scale_denominator!) < 6
               AND (z(!scale_denominator!) >= 5 AND scalerank < 4
                 OR z(!scale_denominator!) >= 4 AND scalerank < 3
                 OR z(!scale_denominator!) >= 3 AND scalerank < 2)
-            ORDER BY
-              labelrank ASC,
-              scalerank ASC,
-              natscale DESC,
-              pop_max DESC,
-              name
+            ORDER BY -- this order by determines the "best" OSM match
+              ne.ctid
+
             ) ne_places
         UNION ALL
         SELECT
