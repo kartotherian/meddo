@@ -310,32 +310,47 @@ Layer:
             'city' AS class,
             NULL::bool AS capital,
             NULL::int AS rank
-          FROM ( -- this subselect gets NE place names and tries to join them against OSM place names
+          FROM (
             SELECT
-              DISTINCT ON (ne.ctid)
-                COALESCE(ST_PointOnSurface(o.way), ne.way) AS way,
-                COALESCE(o.name, ne.name) AS name
-            FROM ne_places ne
-              LEFT JOIN osm_places o ON (
-                (lower(unaccent(o.name)) IN (lower(unaccent(ne.name)),
-                                            lower(unaccent(ne.namepar)),
-                                            lower(unaccent(ne.namealt)),
-                                            lower(unaccent(ne.nameascii)))
-                OR lower(unaccent(o.names->'en')) IN (lower(unaccent(ne.name)),
-                                            lower(unaccent(ne.namepar)),
-                                            lower(unaccent(ne.namealt)),
-                                            lower(unaccent(ne.nameascii))))
-                AND ST_DWithin(ne.way, o.way, 50000)
-              )
-            WHERE ne.way && !bbox!
-              AND z(!scale_denominator!) < 6
-              AND (z(!scale_denominator!) >= 5 AND scalerank < 4
-                OR z(!scale_denominator!) >= 4 AND scalerank < 3
-                OR z(!scale_denominator!) >= 3 AND scalerank < 2)
-            ORDER BY -- this order by determines the "best" OSM match
-              ne.ctid
-
-            ) ne_places
+                *
+              FROM ( -- this subselect gets NE place names and tries to join them against OSM place names
+                SELECT
+                  DISTINCT ON (ne.ctid)
+                    COALESCE(ST_PointOnSurface(o.way), ne.way) AS way,
+                    COALESCE(o.name, ne.name) AS name,
+                    labelrank,
+                    scalerank,
+                    natscale,
+                    pop_max
+                FROM ne_places ne
+                  LEFT JOIN osm_places o ON (
+                    (lower(unaccent(o.name)) IN (lower(unaccent(ne.name)),
+                                                lower(unaccent(ne.namepar)),
+                                                lower(unaccent(ne.namealt)),
+                                                lower(unaccent(ne.nameascii)))
+                    OR lower(unaccent(o.names->'en')) IN (lower(unaccent(ne.name)),
+                                                lower(unaccent(ne.namepar)),
+                                                lower(unaccent(ne.namealt)),
+                                                lower(unaccent(ne.nameascii))))
+                    AND ST_DWithin(ne.way, o.way, 50000)
+                  )
+                WHERE ne.way && !bbox!
+                  AND z(!scale_denominator!) < 6
+                  AND (z(!scale_denominator!) >= 5 AND scalerank < 4
+                    OR z(!scale_denominator!) >= 4 AND scalerank < 3
+                    OR z(!scale_denominator!) >= 3 AND scalerank < 2)
+                ORDER BY -- this order by determines the "best" OSM match.
+                  ne.ctid,
+                  levenshtein(lower(unaccent(o.name)), lower(unaccent(ne.name))) ASC,
+                  ST_Distance(o.way, ne.way)
+                ) ne_places
+              ORDER BY -- Set the order in terms of NE paramaters
+                labelrank ASC,
+                scalerank ASC,
+                natscale DESC,
+                pop_max DESC,
+                name
+            ) ne_ordered
         UNION ALL
         SELECT
             ST_PointOnSurface(way) way,
