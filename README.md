@@ -26,10 +26,10 @@ git clone -b v0.0.8 git://github.com/ClearTables/ClearTables.git
 pushd ClearTables
 make
 createdb ct
-psql -d ct -c 'CREATE EXTENSION postgis; CREATE EXTENSION hstore;'
+psql -d ct -c 'CREATE EXTENSION postgis; CREATE EXTENSION hstore; CREATE EXTENSION unaccent; CREATE EXTENSION fuzzystrmatch;'
 make # Create cleartables files
 cat sql/types/*.sql | psql -1Xq -d ct # Load SQL types
-osm2pgsql -G -d ct --number-processes 2 --output multi --style cleartables.json ~/path/to/extract # Load OSM data
+osm2pgsql -E 3857 -G -d ct --number-processes 2 --output multi --style cleartables.json ~/path/to/extract # Load OSM data
 cat sql/post/*.sql | psql -1Xq -d ct # Add post-import SQL
 popd
 ```
