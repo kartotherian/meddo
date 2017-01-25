@@ -56,6 +56,23 @@ Layer:
           FROM ne_lake
           WHERE z(!scale_denominator!) < 5
         ) AS water
+  - id: pier
+    geometry: polygon
+    properties:
+      minzoom: 12
+      buffer-size: 4
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            way
+          FROM pier_area
+        --  WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+        UNION ALL
+        SELECT
+            way
+          FROM pier_line
+        ) AS pier
   - id: waterway
     geometry: linestring
     properties:

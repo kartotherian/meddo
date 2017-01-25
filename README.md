@@ -22,7 +22,7 @@ This style requires an osm2pgsql database loaded with [https://github.com/ClearT
 See the [ClearTables documentation for details](https://github.com/ClearTables/ClearTables#usage) and load into the database `ct`, with the command-line option `-G`
 
 ```sh
-git clone -b v0.0.8 git://github.com/ClearTables/ClearTables.git
+git clone -b v0.0.9 git://github.com/ClearTables/ClearTables.git
 pushd ClearTables
 make
 createdb ct
