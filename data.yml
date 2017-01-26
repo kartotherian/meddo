@@ -252,6 +252,31 @@ Layer:
     properties:
       minzoom: 5
       buffer-size: 128
+  - id: aeroway
+    properties:
+      minzoom: 10
+      buffer-size: 8
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            way,
+            aeroway::text AS class,
+            ref
+          FROM aeroway_line
+          WHERE way && !bbox!
+            AND (aeroway = 'runway' AND z(!scale_denominator!) >= 10
+              OR aeroway = 'taxiway' AND z(!scale_denominator!) >= 12)
+        UNION ALL
+        SELECT
+            way,
+            aeroway::text AS class,
+            NULL::text AS ref
+          FROM aeroway_area
+          WHERE way && !bbox!
+            AND way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+            AND z(!scale_denominator!) >= 12
+        ) AS aeroway
   - id: place
     Datasource:
       <<: *osm2pgsql
