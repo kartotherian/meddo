@@ -442,7 +442,7 @@ Layer:
               AND z(!scale_denominator!) >= 11
         ) AS features
         ORDER BY
-          prio DESC,
+          prio ASC,
           way_area DESC
         ) AS landcover
   - id: landuse
