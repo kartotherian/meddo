@@ -220,7 +220,8 @@ Layer:
         (SELECT
             way,
             name,
-            NULL::text as ref,
+            ref,
+            char_length(ref) AS ref_length,
             class::text,
             oneway
           FROM (
@@ -230,10 +231,11 @@ Layer:
                 name,
                 class,
                 oneway IN ('true','reverse') AS oneway,
+                array_to_string(refs, ';') AS ref,
                 NULL::real AS way_area
               FROM roads
               WHERE way && !bbox!
-                AND name IS NOT NULL
+                AND (name IS NOT NULL OR refs IS NOT NULL)
                 AND (
                   class >= 'motorway'
                   OR class >= 'primary' AND z(!scale_denominator!) >= 7
