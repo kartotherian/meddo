@@ -65,6 +65,7 @@ Generate the borders with OSMBorder then run the SQL
 CREATE TABLE osmborder_lines (
   osm_id bigint,
   admin_level int,
+  dividing_line bool,
   disputed bool,
   maritime bool,
   way Geometry(LineString, 3857));
