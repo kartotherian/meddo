@@ -167,49 +167,53 @@ Layer:
             oneway,
             brunnel::text,
             layer
-          FROM (
-            SELECT
-                CASE WHEN oneway = 'reverse' THEN ST_Reverse(way) ELSE way END AS way,
-                class,
-                ramp,
-                oneway IN ('true','reverse') AS oneway,
-                brunnel,
-                layer,
-                NULL::real AS way_area
-              FROM roads
-              WHERE way && !bbox!
-                AND (
-                  class >= 'motorway'
-                  OR class >= 'primary' AND z(!scale_denominator!) >= 7
-                  OR class >= 'tertiary' AND z(!scale_denominator!) >= 9
-                  OR class >= 'minor' AND z(!scale_denominator!) >= 12
-                  OR class >= 'service' AND z(!scale_denominator!) >= 14
-                  OR z(!scale_denominator!) >= 14
-                ) AND NOT (ramp AND z(!scale_denominator!) < 10)
-            UNION ALL
-            SELECT
-                way,
-                class,
-                NULL::boolean AS ramp, -- cover ssy
-                NULL::boolean AS oneway,
-                brunnel,
-                layer,
-                NULL::real AS way_area
-              FROM rail
-              WHERE way && !bbox!
-            UNION ALL
-            SELECT
-                way,
-                class,
-                NULL::boolean AS ramp,
-                NULL::boolean AS oneway,
-                brunnel,
-                layer,
-                way_area
-              FROM road_areas
-              WHERE way && !bbox!
-              ) AS t
-          ORDER BY layer, ramp DESC, class DESC, way_area DESC NULLS LAST
+          FROM
+            (SELECT
+                *
+              FROM
+              (SELECT
+                  CASE WHEN oneway = 'reverse' THEN ST_Reverse(way) ELSE way END AS way,
+                  class,
+                  ramp,
+                  oneway IN ('true','reverse') AS oneway,
+                  brunnel,
+                  layer,
+                  NULL::real AS way_area
+                FROM roads
+                WHERE way && !bbox!
+                  AND (
+                    class >= 'motorway'
+                    OR class >= 'primary' AND z(!scale_denominator!) >= 7
+                    OR class >= 'tertiary' AND z(!scale_denominator!) >= 9
+                    OR class >= 'minor' AND z(!scale_denominator!) >= 12
+                    OR class >= 'service' AND z(!scale_denominator!) >= 14
+                    OR z(!scale_denominator!) >= 14
+                  ) AND NOT (ramp AND z(!scale_denominator!) < 10)
+              UNION ALL
+              SELECT
+                  way,
+                  class,
+                  NULL::boolean AS ramp, -- cover ssy
+                  NULL::boolean AS oneway,
+                  brunnel,
+                  layer,
+                  NULL::real AS way_area
+                FROM rail
+                WHERE way && !bbox!
+              UNION ALL
+              SELECT
+                  way,
+                  class,
+                  NULL::boolean AS ramp,
+                  NULL::boolean AS oneway,
+                  brunnel,
+                  layer,
+                  way_area
+                FROM road_areas
+                WHERE way && !bbox!
+                ) AS t
+            ORDER BY layer, ramp DESC, class ASC, way_area DESC NULLS LAST
+          ) AS typed_transport
         ) AS transport
     properties:
       minzoom: 5
@@ -224,33 +228,37 @@ Layer:
             char_length(ref) AS ref_length,
             class::text,
             oneway
-          FROM (
-            SELECT
-                CASE WHEN oneway = 'reverse' THEN ST_Reverse(way) ELSE way END AS way,
-                osm_id,
-                name,
-                class,
-                oneway IN ('true','reverse') AS oneway,
-                array_to_string(refs, ';') AS ref,
-                NULL::real AS way_area
-              FROM roads
-              WHERE way && !bbox!
-                AND (name IS NOT NULL OR refs IS NOT NULL)
-                AND (
-                  class >= 'motorway'
-                  OR class >= 'primary' AND z(!scale_denominator!) >= 7
-                  OR class >= 'tertiary' AND z(!scale_denominator!) >= 9
-                  OR class >= 'minor' AND z(!scale_denominator!) >= 14
-                  OR class >= 'service' AND z(!scale_denominator!) >= 14
-                  OR z(!scale_denominator!) >= 14
-                )
-              ) AS t
-          -- This sort needs to sort class reverse to the transport layer, where
-          -- high-class roads have to be rendered on top of everything else. Here
-          -- high-class roads need their labels placed first.
-          ORDER BY class DESC, way_area NULLS FIRST,
-            length(name) DESC, name, osm_id
-        ) AS transport
+          FROM
+            (SELECT
+                *
+              FROM
+              (SELECT
+                  CASE WHEN oneway = 'reverse' THEN ST_Reverse(way) ELSE way END AS way,
+                  osm_id,
+                  name,
+                  class,
+                  oneway IN ('true','reverse') AS oneway,
+                  array_to_string(refs, ';') AS ref,
+                  NULL::real AS way_area
+                FROM roads
+                WHERE way && !bbox!
+                  AND (name IS NOT NULL OR refs IS NOT NULL)
+                  AND (
+                    class >= 'motorway'
+                    OR class >= 'primary' AND z(!scale_denominator!) >= 7
+                    OR class >= 'tertiary' AND z(!scale_denominator!) >= 9
+                    OR class >= 'minor' AND z(!scale_denominator!) >= 14
+                    OR class >= 'service' AND z(!scale_denominator!) >= 14
+                    OR z(!scale_denominator!) >= 14
+                  )
+                ) AS t
+            -- This sort needs to sort class reverse to the transport layer, where
+            -- high-class roads have to be rendered on top of everything else. Here
+            -- high-class roads need their labels placed first.
+            ORDER BY class DESC, way_area NULLS FIRST,
+              length(name) DESC, name, osm_id
+          ) AS typed_transport_name
+        ) AS transport_name
     properties:
       minzoom: 5
       buffer-size: 128
