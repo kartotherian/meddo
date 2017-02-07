@@ -24,7 +24,6 @@ See the [ClearTables documentation for details](https://github.com/ClearTables/C
 ```sh
 git clone -b v0.0.9 git://github.com/ClearTables/ClearTables.git
 pushd ClearTables
-make
 createdb ct
 psql -d ct -c 'CREATE EXTENSION postgis; CREATE EXTENSION hstore; CREATE EXTENSION unaccent; CREATE EXTENSION fuzzystrmatch;'
 make # Create cleartables files
