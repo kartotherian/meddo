@@ -450,6 +450,7 @@ Layer:
             FROM recreation_polygon
             WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
               AND z(!scale_denominator!) >= 11
+              AND recreation IN ('park', 'dog_park', 'garden', 'golf')
         ) AS features
         ORDER BY
           prio ASC,
