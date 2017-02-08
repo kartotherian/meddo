@@ -102,6 +102,7 @@ Layer:
         (SELECT
             way,
             name,
+            (hstore_to_json(names))::text name_,
             waterway AS class
           FROM waterways
           WHERE name IS NOT NULL AND
@@ -224,6 +225,7 @@ Layer:
         (SELECT
             way,
             name,
+            (hstore_to_json(names))::text name_,
             ref,
             char_length(ref) AS ref_length,
             class::text,
@@ -236,6 +238,7 @@ Layer:
                   CASE WHEN oneway = 'reverse' THEN ST_Reverse(way) ELSE way END AS way,
                   osm_id,
                   name,
+                  names,
                   class,
                   oneway IN ('true','reverse') AS oneway,
                   array_to_string(refs, ';') AS ref,
@@ -326,6 +329,7 @@ Layer:
         SELECT
             way,
             name,
+            (hstore_to_json(names))::text name_,
             rank::text AS class, -- TODO: use a case statement to do this properly
             NULL::bool AS capital,
             NULL::int AS rank
@@ -334,11 +338,13 @@ Layer:
               DISTINCT ON (ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8))
                 way,
                 name,
+                names,
                 rank
               FROM (
                 SELECT
                     ST_PointOnSurface(way) way,
                     name,
+                    names,
                     class,
                     rank,
                     population,
@@ -359,6 +365,7 @@ Layer:
         SELECT
             way,
             name,
+            (hstore_to_json(names))::text name_,
             'city' AS class,
             NULL::bool AS capital,
             NULL::int AS rank
@@ -370,6 +377,7 @@ Layer:
                   DISTINCT ON (ne.ctid)
                     COALESCE(ST_PointOnSurface(o.way), ne.way) AS way,
                     COALESCE(o.name, ne.name) AS name,
+                    o.names, -- Should get name:en from NE if no OSM match
                     labelrank,
                     scalerank,
                     natscale,
@@ -407,6 +415,7 @@ Layer:
         SELECT
             ST_PointOnSurface(way) way,
             name,
+            (hstore_to_json(names))::text name_,
             CASE
               WHEN level = 2 THEN 'country'
               WHEN level = 4 THEN 'state'
