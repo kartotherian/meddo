@@ -536,6 +536,7 @@ Layer:
             AND (transit_mode = 'ferry' AND z(!scale_denominator!) >= 10
               OR transit_mode = 'rail' AND station AND z(!scale_denominator!) >= 10
               OR transit_mode = 'rail' AND NOT station AND z(!scale_denominator!) >= 13
+              OR transit_mode = 'tram' AND z(!scale_denominator!) >= 13
               OR transit_mode = 'bus' AND station AND z(!scale_denominator!) >= 13
               OR transit_mode = 'bus' AND NOT station AND z(!scale_denominator!) >= 15
               OR transit_mode = 'taxi' AND z(!scale_denominator!) >= 14)
@@ -544,8 +545,9 @@ Layer:
             CASE
               WHEN transit_mode = 'ferry' THEN 1
               WHEN transit_mode = 'rail' THEN 2
-              WHEN transit_mode = 'taxi' THEN 3
-              WHEN transit_mode = 'bus' THEN 4
+              WHEN transit_mode = 'tram' THEN 3
+              WHEN transit_mode = 'taxi' THEN 4
+              WHEN transit_mode = 'bus' THEN 5
               ELSE NULL END,
             way_area DESC NULLS LAST
         ) AS transit_stop
