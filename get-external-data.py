@@ -41,6 +41,9 @@ class Table:
     self._temp_schema = temp_schema
     self._dst_schema = schema
     self._metadata_table = metadata_table
+
+  # Clean up the temporary schema in preperation for loading
+  def clean_temp(self):
     with self._conn.cursor() as cur:
       cur.execute('''DROP TABLE IF EXISTS "{temp_schema}"."{name}"'''.format(name=self._name, temp_schema=self._temp_schema))
     self._conn.commit()
@@ -139,6 +142,7 @@ def main():
         os.makedirs(workingdir, exist_ok=True)
 
         this_table = Table(name, conn, config["settings"]["temp_schema"], config["settings"]["schema"], config["settings"]["metadata_table"])
+        this_table.clean_temp()
 
         if not opts.force:
           headers = {'If-Modified-Since': this_table.last_modified()}
