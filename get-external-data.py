@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
-
-# modules for config reading
+# This script is designed to load quasi-static data into a PostGIS database for
+# rendering maps. It differs from the usual scripts to do this in that it is
+# designed to take its configuration from a file rather than be a series of
+# shell commands, and consideration has been given to doing the loading the
+# right way.
+#
+# Some implicit assumptions are
+# - Time spent querying (rendering) the data is more valuable than the one-time
+#   cost of loading it
+# - The script will not be running multiple times in parallel. This is not
+#   normally likely because the script is likely to be called daily or less,
+#   not minutely.
+# - Usage patterns will be similar to typical map rendering
 import yaml
 import os
 import re
