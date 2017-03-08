@@ -92,7 +92,7 @@ ALTER TABLE "{temp_schema}"."{name}" SET SCHEMA "{schema}";
 def main():
   # parse options
   parser = argparse.ArgumentParser(description="Load external data into a database")
-  
+
   parser.add_argument("-f", "--force", action="store_true", help="Download new data, even if not required")
 
   parser.add_argument("-c", "--config", action="store", default="external-data.yml", help="Name of configuraton file (default external-data.yml)")
@@ -101,12 +101,14 @@ def main():
   parser.add_argument("-H", "--host", action="store", help="Override database server host or socket directory")
   parser.add_argument("-p", "--port", action="store", help="Override database server port")
   parser.add_argument("-U", "--username", action="store", help="Override database user name")
-  
+
   opts = parser.parse_args()
   with open(opts.config) as config_file:
     config = yaml.safe_load(config_file)
     os.makedirs(config["settings"]["data_dir"], exist_ok=True)
 
+    # If the DB options are unspecified in both on the command line and in the
+    # config file, libpq will pick what to use with the None
     database = opts.database or config["settings"].get("database")
     host = opts.host or config["settings"].get("host")
     port = opts.port or config["settings"].get("port")
@@ -118,16 +120,17 @@ def main():
                           user=user) as conn:
 
       s.headers.update({'User-Agent': 'get-external-data.py/meddo'})
-      
+
       # DB setup
       database_setup(conn, config["settings"]["temp_schema"], config["settings"]["schema"], config["settings"]["metadata_table"])
 
       for name, source in config["sources"].items():
         print ("Loading file {}".format(name))
         # Don't attempt to handle strange names
-        # you don't want them when writing a style with all the quoting headaches
+        # Even if there was code to escape them properly here, you don't want
+        # in a style with all the quoting headaches
         if not re.match('''^[a-zA-Z0-9_]+$''', name):
-          raise RuntimeError("Only ASCII alphanumeric table names supported")
+          raise RuntimeError("Only ASCII alphanumeric table are names supported")
 
         workingdir = os.path.join(config["settings"]["data_dir"], name)
         # Clean up anything left over from an aborted run
@@ -178,20 +181,20 @@ def main():
 
           print ("running {}".format(subprocess.list2cmdline(ogrcommand)))
 
-          # need to catch errors here
+          # ogr2ogr can raise errors here, so they need to be caught
           try:
             ogr2ogr = subprocess.check_output(ogrcommand, stderr=subprocess.PIPE, universal_newlines=True)
           except subprocess.CalledProcessError as e:
+            # Add more detail on stdout for the logs
             print ("ogr2ogr returned {} with layer {}".format(e.returncode, name))
             print ("Command line was {}".format(subprocess.list2cmdline(e.cmd)))
             print ("Output was\n{}".format(e.output))
-            raise RuntimeError("Unable to load table {}".format(name))
+            raise RuntimeError("ogr2ogr error when loading table {}".format(name))
 
           this_table.index()
           this_table.replace(new_last_modified)
         else:
           print("Table {} did not require updating".format(name))
-
 
 if __name__ == '__main__':
   main()
