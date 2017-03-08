@@ -94,14 +94,16 @@ def main():
   parser = argparse.ArgumentParser(description="Load external data into a database")
   
   parser.add_argument("-f", "--force", action="store_true", help="Download new data, even if not required")
-  
+
+  parser.add_argument("-c", "--config", action="store", default="external-data.yml", help="Name of configuraton file (default external-data.yml)")
+
   parser.add_argument("-d", "--database", action="store", help="Override database name to connect to")
   parser.add_argument("-H", "--host", action="store", help="Override database server host or socket directory")
   parser.add_argument("-p", "--port", action="store", help="Override database server port")
   parser.add_argument("-U", "--username", action="store", help="Override database user name")
   
   opts = parser.parse_args()
-  with open('external-data.yml') as config_file:
+  with open(opts.config) as config_file:
     config = yaml.safe_load(config_file)
     os.makedirs(config["settings"]["data_dir"], exist_ok=True)
 
