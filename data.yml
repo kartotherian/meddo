@@ -30,28 +30,33 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
+            osm_id,
             way
           FROM water_areas
           WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
             AND z(!scale_denominator!) >= 5
         UNION ALL
         SELECT
+            NULL,
             way
           FROM ocean_polygons
           WHERE z(!scale_denominator!) >= 10
         UNION ALL
         SELECT
+            NULL,
             way
           FROM simplified_ocean_polygons
           WHERE z(!scale_denominator!) < 10 AND z(!scale_denominator!) >= 5
         -- Switch to NE for very low zoom
         UNION ALL
         SELECT
+            NULL,
             way
           FROM ne_ocean
           WHERE z(!scale_denominator!) < 5
         UNION ALL
         SELECT
+            NULL,
             way
           FROM ne_lake
           WHERE z(!scale_denominator!) < 5
@@ -65,11 +70,13 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
+            osm_id,
             way
           FROM pier_area
         --  WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
         UNION ALL
         SELECT
+            osm_id,
             way
           FROM pier_line
         ) AS pier
@@ -82,6 +89,7 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
+            osm_id,
             way,
             waterway AS class
           FROM waterways
@@ -100,6 +108,7 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
+            osm_id,
             way,
             name,
             (hstore_to_json(names))::text name_,
@@ -118,6 +127,7 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
+            osm_id,
             way,
             admin_level,
             disputed
@@ -140,6 +150,7 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
+            osm_id,
             way,
             class::text
           FROM protected_area
@@ -150,6 +161,7 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
+            osm_id,
             way
           FROM buildings
           WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
@@ -162,6 +174,7 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
+            osm_id,
             way,
             class::text,
             ramp,
@@ -173,6 +186,7 @@ Layer:
                 *
               FROM
               (SELECT
+                  osm_id,
                   CASE WHEN oneway = 'reverse' THEN ST_Reverse(way) ELSE way END AS way,
                   class,
                   ramp,
@@ -192,6 +206,7 @@ Layer:
                   ) AND NOT (ramp AND z(!scale_denominator!) < 10)
               UNION ALL
               SELECT
+                  osm_id,
                   way,
                   class,
                   NULL::boolean AS ramp, -- cover ssy
@@ -203,6 +218,7 @@ Layer:
                 WHERE way && !bbox!
               UNION ALL
               SELECT
+                  osm_id,
                   way,
                   class,
                   NULL::boolean AS ramp,
@@ -223,6 +239,7 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
+            osm_id,
             way,
             name,
             (hstore_to_json(names))::text name_,
@@ -235,8 +252,8 @@ Layer:
                 *
               FROM
               (SELECT
-                  CASE WHEN oneway = 'reverse' THEN ST_Reverse(way) ELSE way END AS way,
                   osm_id,
+                  CASE WHEN oneway = 'reverse' THEN ST_Reverse(way) ELSE way END AS way,
                   name,
                   names,
                   class,
@@ -273,6 +290,7 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
+            osm_id,
             way,
             aeroway::text AS class,
             ref
@@ -282,6 +300,7 @@ Layer:
               OR aeroway = 'taxiway' AND z(!scale_denominator!) >= 12)
         UNION ALL
         SELECT
+            osm_id,
             way,
             aeroway::text AS class,
             NULL::text AS ref
@@ -299,6 +318,7 @@ Layer:
               *
             FROM (
               SELECT
+                  node_id(osm_id) osm_id,
                   name,
                   names,
                   class,
@@ -309,6 +329,7 @@ Layer:
                 FROM place_point
               UNION ALL
               SELECT
+                  osm_id,
                   name,
                   names,
                   class,
@@ -327,6 +348,7 @@ Layer:
                 OR z(!scale_denominator!) >= 13 AND rank >= 'neighbourhood' AND class = 'subregion')
           )
         SELECT
+            osm_id,
             way,
             name,
             (hstore_to_json(names))::text name_,
@@ -336,12 +358,14 @@ Layer:
           FROM ( -- The places have an ORDER BY so need a subselect
             SELECT
               DISTINCT ON (ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8))
+                osm_id,
                 way,
                 name,
                 names,
                 rank
               FROM (
                 SELECT
+                    osm_id,
                     ST_PointOnSurface(way) way,
                     name,
                     names,
@@ -363,6 +387,7 @@ Layer:
             ) gridded_osm_places
         UNION ALL
         SELECT
+            osm_id,
             way,
             name,
             (hstore_to_json(names))::text name_,
@@ -375,6 +400,7 @@ Layer:
               FROM ( -- this subselect gets NE place names and tries to join them against OSM place names
                 SELECT
                   DISTINCT ON (ne.ctid)
+                    o.osm_id,
                     COALESCE(ST_PointOnSurface(o.way), ne.way) AS way,
                     COALESCE(o.name, ne.name) AS name,
                     o.names, -- Should get name:en from NE if no OSM match
@@ -413,6 +439,7 @@ Layer:
             ) ne_ordered
         UNION ALL
         SELECT
+            osm_id,
             ST_PointOnSurface(way) way,
             name,
             (hstore_to_json(names))::text name_,
@@ -441,8 +468,11 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
-            way, class
+            osm_id,
+            way,
+            class
           FROM (SELECT
+              osm_id,
               way,
               'wood' AS class,
               20 AS prio,
@@ -452,6 +482,7 @@ Layer:
               AND z(!scale_denominator!) >= 5
           UNION ALL
           SELECT
+              osm_id,
               way,
               'park' AS class,
               10 AS prio,
@@ -474,10 +505,12 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
+            osm_id,
             way,
             class
           FROM (
             SELECT
+                osm_id,
                 way,
                 'hospital' AS class,
                 20 as prio,
@@ -488,6 +521,7 @@ Layer:
                 AND z(!scale_denominator!) >= 12
             UNION ALL
             SELECT
+                osm_id,
                 way,
                 education::text AS class,
                 10 as prio,
@@ -513,11 +547,13 @@ Layer:
       <<: *osm2pgsql
       table: |-
         (SELECT
+            osm_id,
             way,
             transit_mode::text AS "mode",
             station
           FROM (
             SELECT
+                osm_id,
                 way,
                 transit_mode,
                 station,
@@ -525,6 +561,7 @@ Layer:
               FROM transit_point
             UNION ALL
             SELECT
+                osm_id,
                 ST_PointOnSurface(way) AS way,
                 transit_mode,
                 station,
