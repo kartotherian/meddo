@@ -454,7 +454,8 @@ Layer:
           WHERE way && !bbox!
             AND ST_PointOnSurface(way) && !bbox!
             AND name IS NOT NULL
-            AND level IN (2, 4)
+            AND (level = 2
+              OR level = 4 AND z(!scale_denominator!) > 5)
         ) AS place
     properties:
       minzoom: 2
