@@ -376,7 +376,7 @@ Layer:
                   FROM osm_places
                 ) pp
               WHERE way && !bbox! -- Refilter after PointOnSurface
-                AND z(!scale_denominator!) >= 6 -- Only do this for z6+
+                AND z(!scale_denominator!) >= 7 -- Only do this for z7+
               ORDER BY
                 ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
                 rank DESC NULLS LAST,
@@ -421,8 +421,9 @@ Layer:
                     AND ST_DWithin(ne.way, o.way, 50000)
                   )
                 WHERE ne.way && !bbox!
-                  AND z(!scale_denominator!) < 6
-                  AND (z(!scale_denominator!) >= 5 AND scalerank < 4
+                  AND z(!scale_denominator!) < 7 -- Use OSM for z7+
+                  AND (z(!scale_denominator!) >= 6 AND scalerank < 6 -- NE has 4 and 5 the same
+                    OR z(!scale_denominator!) >= 5 AND scalerank < 4
                     OR z(!scale_denominator!) >= 4 AND scalerank < 3
                     OR z(!scale_denominator!) >= 3 AND scalerank < 2)
                 ORDER BY -- this order by determines the "best" OSM match.
