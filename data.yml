@@ -340,11 +340,11 @@ Layer:
                 FROM place_polygon) all_places
             WHERE way && !bbox!
               AND name IS NOT NULL
-              AND (z(!scale_denominator!) < 7 AND rank >= 'town' AND class = 'settlement' -- For joining with NE data
-                OR z(!scale_denominator!) >= 7 AND rank >= 'city' AND class = 'settlement'
-                OR z(!scale_denominator!) >= 8 AND rank >= 'town' AND class = 'settlement'
-                OR z(!scale_denominator!) >= 9 AND rank >= 'village' AND class = 'settlement'
-                OR z(!scale_denominator!) >= 10 AND rank >= 'hamlet' AND class = 'settlement'
+              AND (z(!scale_denominator!) < 8 AND rank >= 'town' AND class = 'settlement' -- For joining with NE data
+                OR z(!scale_denominator!) >= 8 AND rank >= 'city' AND class = 'settlement'
+                OR z(!scale_denominator!) >= 9 AND rank >= 'town' AND class = 'settlement'
+                OR z(!scale_denominator!) >= 10 AND rank >= 'village' AND class = 'settlement'
+                OR z(!scale_denominator!) >= 11 AND rank >= 'hamlet' AND class = 'settlement'
                 OR z(!scale_denominator!) >= 13 AND rank >= 'neighbourhood' AND class = 'subregion')
           )
         SELECT
@@ -376,7 +376,7 @@ Layer:
                   FROM osm_places
                 ) pp
               WHERE way && !bbox! -- Refilter after PointOnSurface
-                AND z(!scale_denominator!) >= 7 -- Only do this for z7+
+                AND z(!scale_denominator!) >= 8 -- Only do this for z8+
               ORDER BY
                 ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
                 rank DESC NULLS LAST,
@@ -421,8 +421,9 @@ Layer:
                     AND ST_DWithin(ne.way, o.way, 50000)
                   )
                 WHERE ne.way && !bbox!
-                  AND z(!scale_denominator!) < 7 -- Use OSM for z7+
-                  AND (z(!scale_denominator!) >= 6 AND scalerank < 6 -- NE has 4 and 5 the same
+                  AND z(!scale_denominator!) < 8 -- Use OSM for z8+
+                  AND (z(!scale_denominator!) >= 7 AND scalerank < 7
+                    OR z(!scale_denominator!) >= 6 AND scalerank < 6 -- NE has 4 and 5 the same
                     OR z(!scale_denominator!) >= 5 AND scalerank < 4
                     OR z(!scale_denominator!) >= 4 AND scalerank < 3
                     OR z(!scale_denominator!) >= 3 AND scalerank < 2)
