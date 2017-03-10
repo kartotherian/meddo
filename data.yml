@@ -340,10 +340,10 @@ Layer:
                 FROM place_polygon) all_places
             WHERE way && !bbox!
               AND name IS NOT NULL
-              AND (z(!scale_denominator!) < 6 AND rank >= 'town' AND class = 'settlement' -- For joining with NE data
-                OR z(!scale_denominator!) >= 6 AND rank >= 'city' AND class = 'settlement'
-                OR z(!scale_denominator!) >= 6 AND rank >= 'town' AND class = 'settlement'
-                OR z(!scale_denominator!) >= 8 AND rank >= 'village' AND class = 'settlement'
+              AND (z(!scale_denominator!) < 7 AND rank >= 'town' AND class = 'settlement' -- For joining with NE data
+                OR z(!scale_denominator!) >= 7 AND rank >= 'city' AND class = 'settlement'
+                OR z(!scale_denominator!) >= 8 AND rank >= 'town' AND class = 'settlement'
+                OR z(!scale_denominator!) >= 9 AND rank >= 'village' AND class = 'settlement'
                 OR z(!scale_denominator!) >= 10 AND rank >= 'hamlet' AND class = 'settlement'
                 OR z(!scale_denominator!) >= 13 AND rank >= 'neighbourhood' AND class = 'subregion')
           )
