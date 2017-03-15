@@ -198,7 +198,8 @@ Layer:
                 WHERE way && !bbox!
                   AND (
                     class >= 'motorway'
-                    OR class >= 'primary' AND z(!scale_denominator!) >= 7
+                    OR class >= 'trunk' AND z(!scale_denominator!) >= 7
+                    OR class >= 'primary' AND z(!scale_denominator!) >= 8
                     OR class >= 'tertiary' AND z(!scale_denominator!) >= 9
                     OR class >= 'minor' AND z(!scale_denominator!) >= 12
                     OR class >= 'service' AND z(!scale_denominator!) >= 14
@@ -233,7 +234,7 @@ Layer:
           ) AS typed_transport
         ) AS transport
     properties:
-      minzoom: 5
+      minzoom: 6
   - id: transport_name
     Datasource:
       <<: *osm2pgsql
@@ -265,7 +266,8 @@ Layer:
                   AND (name IS NOT NULL OR refs IS NOT NULL)
                   AND (
                     class >= 'motorway'
-                    OR class >= 'primary' AND z(!scale_denominator!) >= 7
+                    OR class >= 'trunk' AND z(!scale_denominator!) >= 7
+                    OR class >= 'primary' AND z(!scale_denominator!) >= 8
                     OR class >= 'tertiary' AND z(!scale_denominator!) >= 9
                     OR class >= 'minor' AND z(!scale_denominator!) >= 14
                     OR class >= 'service' AND z(!scale_denominator!) >= 14
@@ -280,7 +282,7 @@ Layer:
           ) AS typed_transport_name
         ) AS transport_name
     properties:
-      minzoom: 5
+      minzoom: 6
       buffer-size: 128
   - id: aeroway
     properties:
