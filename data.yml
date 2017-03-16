@@ -384,36 +384,48 @@ Layer:
             rank::text AS class, -- TODO: use a case statement to do this properly
             NULL::bool AS capital,
             NULL::int AS rank
-          FROM ( -- The places have an ORDER BY so need a subselect
+          FROM (
             SELECT
-              DISTINCT ON (ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8))
-                osm_id,
-                way,
-                name,
-                names,
-                rank
-              FROM (
-                SELECT
-                    osm_id,
-                    ST_PointOnSurface(way) way,
-                    name,
-                    names,
-                    class,
-                    rank,
-                    population,
-                    way_area
-                  FROM osm_places
-                ) pp
-              WHERE way && !bbox! -- Refilter after PointOnSurface
-                AND z(!scale_denominator!) >= 8 -- Only do this for z8+
-              ORDER BY
-                ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
-                rank DESC NULLS LAST,
-                population DESC NULLS LAST,
-                way_area DESC NULLS LAST,
-                length(name) DESC,
-                name
-            ) gridded_osm_places
+                *
+            FROM ( -- The places have an ORDER BY so need a subselect
+              SELECT
+                DISTINCT ON (ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8))
+                  osm_id,
+                  way,
+                  name,
+                  names,
+                  rank,
+                  population,
+                  way_area
+                FROM (
+                  SELECT
+                      osm_id,
+                      ST_PointOnSurface(way) way,
+                      name,
+                      names,
+                      class,
+                      rank,
+                      population,
+                      way_area
+                    FROM osm_places
+                  ) point_places
+                WHERE way && !bbox! -- Refilter after PointOnSurface
+                  AND z(!scale_denominator!) >= 8 -- Only do this for z8+
+                ORDER BY
+                  ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
+                  rank DESC NULLS LAST,
+                  population DESC NULLS LAST,
+                  way_area DESC NULLS LAST,
+                  length(name) DESC,
+                  name
+              ) gridded_osm_places
+            ORDER BY
+              rank DESC NULLS LAST,
+              population DESC NULLS LAST,
+              way_area DESC NULLS LAST,
+              length(name) DESC,
+              name
+          ) ordered_osm_places
         UNION ALL
         SELECT
             osm_id,
