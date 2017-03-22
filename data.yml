@@ -504,7 +504,7 @@ Layer:
               way_area
             FROM wood_area
             WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
-              AND z(!scale_denominator!) >= 5
+              AND z(!scale_denominator!) >= 6
           UNION ALL
           SELECT
               osm_id,
