@@ -43,7 +43,8 @@ Slim mode is not required by this style, so ``--slim --drop`` can be safely used
 
 If PostgreSQL [`max_connections`](http://www.postgresql.org/docs/9.3/static/runtime-config-connection.html#RUNTIME-CONFIG-CONNECTION-SETTINGS)
 is increased from the default, `--number-processes` can be increased. If `--number-processes` is omitted, osm2pgsql will
-attempt to use as many processes as hardware threads.
+attempt to use as many processes as hardware threads. osm2pgsql will need aproximatelly `number-processes * (number rendering tables + 3)`, Where the number of rendering tables is ~42.
+
 
 ### Load coastline data
 
