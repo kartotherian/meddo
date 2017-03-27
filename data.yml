@@ -483,7 +483,7 @@ Layer:
         ) AS place
     properties:
       minzoom: 2
-      buffer-size: 128
+      buffer-size: 256
   - id: landcover
     geometry: polygon
     properties:
