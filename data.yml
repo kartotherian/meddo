@@ -371,7 +371,7 @@ Layer:
               AND (level = 2
                 OR level = 4 AND z(!scale_denominator!) >= 5)
               AND way_area > 1024*!pixel_width!::real*!pixel_height!::real
-              AND NOT (way_area > 256*256*16*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 6) -- filter out large areas at higher zooms
+              AND NOT (way_area > 256*256*9*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 6) -- filter out large areas at higher zooms
             ORDER BY level ASC,
               way_area DESC
           ) admin_ordered
