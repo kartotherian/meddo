@@ -1,0 +1,12 @@
+admin_area:
+  low:
+    where: level <= 4
+roads:
+  low:
+    where: class >= 'tertiary'
+place_point:
+  low:
+    where: rank >= 'town'
+place_polygon:
+  low:
+    where: rank >= 'town'

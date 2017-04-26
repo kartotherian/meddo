@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+
+# This script takes a YAML file defining indexes and creates SQL statements
+# There are a number of options for concurrent index creation, recreating the
+# osm2pgsql-built indexes, fillfactors, and other settings to give full control
+# of the resulting statements
+# indexes.sql is created by this script, with the default options
+
+from __future__ import print_function
+import argparse, sys, os, yaml
+
+def index_statement(table, name, conditions=None, concurrent=False,notexist=False, fillfactor=None):
+    options = ' CONCURRENTLY' if concurrent else ''
+    options += ' IF NOT EXISTS' if notexist else ''
+    storage = '' if fillfactor is None else '\n  WITH (fillfactor={})'.format(fillfactor)
+    where = '' if conditions is None else '\n  WHERE {}'.format(conditions)
+    return ('CREATE INDEX{options} {table}_{name}\n' +
+            '  ON {table} USING GIST (way)' +
+            '{storage}' +
+            '{where};\n').format(table=table, name=name,
+                storage=storage, options=options, where=where)
+
+def parse(cb):
+    with open(os.path.join(os.path.dirname(__file__), '../indexes.yml')) as yaml_file:
+        indexes = yaml.safe_load(yaml_file)
+
+    for table, data in indexes.iteritems():
+        for name, definition in data.iteritems():
+            cb(table, name, definition["where"])
+
+parser = argparse.ArgumentParser(description='Generates custom index statements')
+parser.add_argument('--concurrent', dest='concurrent', help='Generate indexes CONCURRENTLY', action='store_true', default=False)
+parser.add_argument('--fillfactor', help='Custom fillfactor to use')
+parser.add_argument('--notexist', help='Use IF NOT EXISTS (requires 9.5)', action='store_true', default=False)
+parser.add_argument('--reindex', help='Rebuild existing indexes', action='store_true', default=False)
+args = parser.parse_args()
+
+def cb (table, name, where):
+    print(index_statement(table, name, where, args.concurrent, args.notexist, args.fillfactor), end='')
+
+def reindex_cb(table, name, where):
+    if not args.concurrent:
+        print('REINDEX {table}_{name};'.format(table=table, name=name))
+    else:
+        # Rebuilding indexes concurently requires making a new index, dropping the old one, and renaming.
+        print('ALTER INDEX {table}_{name} RENAME TO {table}_{name}_old;'.format(table=table, name=name))
+        cb(table, name, where)
+        print('DROP INDEX {table}_{name}_old;\n'.format(table=table, name=name))
+
+print(('-- These are suggested indexes for meddo which speed up rendering with a full\n' +
+       '-- planet database.\n'
+       '-- This file is generated with {}\n').format(' '.join(sys.argv)))
+
+if not args.reindex:
+    parse(cb)
+else:
+    parse(reindex_cb)
