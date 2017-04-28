@@ -61,6 +61,26 @@ Layer:
           FROM ne_lake
           WHERE z(!scale_denominator!) < 5
         ) AS water
+  - id: water_name
+    geometry: polygon
+    properties:
+      minzoom: 10
+      buffer-size: 64
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            osm_id,
+            ST_PointOnSurface(way) way,
+            name,
+            (hstore_to_json(names))::text name_
+          FROM water_areas
+          WHERE way && !bbox!
+            AND ST_PointOnSurface(way) && !bbox!
+            AND way_area > 256*256*1/4*!pixel_width!::real*!pixel_height!::real
+            AND NOT (way_area > 256*256*9*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 6) -- filter out large areas at higher zooms
+            AND (name IS NOT NULL OR names IS NOT NULL)
+        ) AS water_name
   - id: pier
     geometry: polygon
     properties:
