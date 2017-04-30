@@ -372,33 +372,6 @@ Layer:
           )
         SELECT
             osm_id,
-            ST_PointOnSurface(way) way,
-            name,
-            (hstore_to_json(names))::text name_,
-            CASE
-              WHEN level = 2 THEN 'country'
-              WHEN level = 4 THEN 'state'
-              ELSE NULL END
-              AS class,
-            NULL::bool AS capital,
-            NULL::int AS rank
-          FROM (
-          SELECT
-              *
-            FROM admin_area
-            WHERE way && !bbox!
-              AND ST_PointOnSurface(way) && !bbox!
-              AND name IS NOT NULL
-              AND (level = 2
-                OR level = 4 AND z(!scale_denominator!) >= 5)
-              AND way_area > 1024*!pixel_width!::real*!pixel_height!::real
-              AND NOT (way_area > 256*256*9*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 6) -- filter out large areas at higher zooms
-            ORDER BY level ASC,
-              way_area DESC
-          ) admin_ordered
-        UNION ALL
-        SELECT
-            osm_id,
             way,
             name,
             (hstore_to_json(names))::text name_,
@@ -501,6 +474,41 @@ Layer:
                 pop_max DESC,
                 name
             ) ne_ordered
+        ) AS place
+    properties:
+      minzoom: 2
+      buffer-size: 256
+  - id: admin_name
+    geometry: point
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            osm_id,
+            ST_PointOnSurface(way) way,
+            name,
+            (hstore_to_json(names))::text name_,
+            CASE
+              WHEN level = 2 THEN 'country'
+              WHEN level = 4 THEN 'state'
+              ELSE NULL END
+              AS class,
+            NULL::bool AS capital,
+            NULL::int AS rank
+          FROM (
+            SELECT
+                *
+              FROM admin_area
+              WHERE way && !bbox!
+                AND ST_PointOnSurface(way) && !bbox!
+                AND name IS NOT NULL
+                AND (level = 2
+                  OR level = 4 AND z(!scale_denominator!) >= 5)
+                AND way_area > 1024*!pixel_width!::real*!pixel_height!::real
+                AND NOT (way_area > 256*256*9*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 6) -- filter out large areas at higher zooms
+              ORDER BY level ASC,
+                way_area DESC
+            ) admin_ordered
         ) AS place
     properties:
       minzoom: 2
