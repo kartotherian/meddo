@@ -494,7 +494,8 @@ Layer:
               ELSE NULL END
               AS class,
             NULL::bool AS capital,
-            NULL::int AS rank
+            NULL::int AS rank,
+            way_area/NULLIF(!pixel_width!::real*!pixel_height!::real,0) AS way_pixels
           FROM (
             SELECT
                 *
