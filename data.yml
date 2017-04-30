@@ -77,7 +77,7 @@ Layer:
           FROM water_areas
           WHERE way && !bbox!
             AND ST_PointOnSurface(way) && !bbox!
-            AND way_area > 256*256*1/4*!pixel_width!::real*!pixel_height!::real
+            AND way_area > 256*256*1/16*!pixel_width!::real*!pixel_height!::real
             AND NOT (way_area > 256*256*9*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 6) -- filter out large areas at higher zooms
             AND (name IS NOT NULL OR names IS NOT NULL)
             AND water != 'river' -- Exclude rivers, which are better labeled with their centerline
