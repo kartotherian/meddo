@@ -44,7 +44,6 @@ def database_setup(conn, temp_schema, schema, metadata_table):
                     .format(schema=schema, metadata_table=metadata_table))
   conn.commit()
 
-
 class Table:
   def __init__(self, name, conn, temp_schema, schema, metadata_table):
     self._name = name
