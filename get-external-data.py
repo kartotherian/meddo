@@ -27,15 +27,7 @@ import io
 import subprocess
 import psycopg2
 
-# import logging
-# import http.client as http_client
-# http_client.HTTPConnection.debuglevel = 1
-# 
-# logging.basicConfig()
-# logging.getLogger().setLevel(logging.DEBUG)
-# requests_log = logging.getLogger("requests.packages.urllib3")
-# requests_log.setLevel(logging.DEBUG)
-# requests_log.propagate = True
+import logging
 
 def database_setup(conn, temp_schema, schema, metadata_table):
   with conn.cursor() as cur:
@@ -114,8 +106,18 @@ def main():
   parser.add_argument("-H", "--host", action="store", help="Override database server host or socket directory")
   parser.add_argument("-p", "--port", action="store", help="Override database server port")
   parser.add_argument("-U", "--username", action="store", help="Override database user name")
+  parser.add_argument("-v", "--verbose", action="store_true", help="Be more verbose. Overrides -q")
+  parser.add_argument("-q", "--quiet", action="store_true", help="Only report serious problems")
 
   opts = parser.parse_args()
+
+  if opts.verbose:
+    logging.basicConfig(level=logging.DEBUG)
+  elif opts.quiet:
+    logging.basicConfig(level=logging.WARNING)
+  else:
+    logging.basicConfig(level=logging.INFO)
+
   with open(opts.config) as config_file:
     config = yaml.safe_load(config_file)
     os.makedirs(config["settings"]["data_dir"], exist_ok=True)
@@ -138,7 +140,7 @@ def main():
       database_setup(conn, config["settings"]["temp_schema"], config["settings"]["schema"], config["settings"]["metadata_table"])
 
       for name, source in config["sources"].items():
-        print ("Loading file {}".format(name))
+        logging.info("Checking table {}".format(name))
         # Don't attempt to handle strange names
         # Even if there was code to escape them properly here, you don't want
         # in a style with all the quoting headaches
@@ -193,22 +195,22 @@ def main():
 
           ogrcommand += [ogrpg, os.path.join(workingdir, source["file"])]
 
-          print ("running {}".format(subprocess.list2cmdline(ogrcommand)))
+          logging.debug("running {}".format(subprocess.list2cmdline(ogrcommand)))
 
           # ogr2ogr can raise errors here, so they need to be caught
           try:
             ogr2ogr = subprocess.check_output(ogrcommand, stderr=subprocess.PIPE, universal_newlines=True)
           except subprocess.CalledProcessError as e:
             # Add more detail on stdout for the logs
-            print ("ogr2ogr returned {} with layer {}".format(e.returncode, name))
-            print ("Command line was {}".format(subprocess.list2cmdline(e.cmd)))
-            print ("Output was\n{}".format(e.output))
+            logging.critical("ogr2ogr returned {} with layer {}".format(e.returncode, name))
+            logging.critical("Command line was {}".format(subprocess.list2cmdline(e.cmd)))
+            logging.critical("Output was\n{}".format(e.output))
             raise RuntimeError("ogr2ogr error when loading table {}".format(name))
 
           this_table.index()
           this_table.replace(new_last_modified)
         else:
-          print("Table {} did not require updating".format(name))
+          logging.info("Table {} did not require updating".format(name))
 
 if __name__ == '__main__':
   main()
