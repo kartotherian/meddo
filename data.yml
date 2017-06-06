@@ -176,6 +176,27 @@ Layer:
             class::text
           FROM protected_area
         ) AS park
+  - id: park_name
+    geometry: point
+    properties:
+      minzoom: 8
+      buffer-size: 128
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            osm_id,
+            ST_PointOnSurface(way) way,
+            class::text,
+            name,
+            (hstore_to_json(names))::text name_
+          FROM protected_area
+          WHERE way && !bbox!
+            AND ST_PointOnSurface(way) && !bbox!
+            AND name IS NOT NULL
+            AND way_area > 0.25*256*256*!pixel_width!::real*!pixel_height!::real
+          ORDER BY way_area
+        ) AS park_name
   - id: building
     geometry: polygon
     Datasource:
