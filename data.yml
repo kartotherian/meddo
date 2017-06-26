@@ -688,5 +688,6 @@ Layer:
               WHEN transit_mode = 'taxi' THEN 4
               WHEN transit_mode = 'bus' THEN 5
               ELSE NULL END,
-            way_area DESC NULLS LAST
+            way_area DESC NULLS LAST,
+            osm_id
         ) AS transit_stop
