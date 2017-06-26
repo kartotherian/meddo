@@ -645,12 +645,16 @@ Layer:
         (SELECT
             osm_id,
             way,
+            name,
+            (hstore_to_json(names))::text name_,
             transit_mode::text AS "mode",
             station
           FROM (
             SELECT
                 osm_id,
                 way,
+                name,
+                names,
                 transit_mode,
                 station,
                 NULL::real AS way_area
@@ -659,6 +663,8 @@ Layer:
             SELECT
                 osm_id,
                 ST_PointOnSurface(way) AS way,
+                name,
+                names,
                 transit_mode,
                 station,
                 way_area
