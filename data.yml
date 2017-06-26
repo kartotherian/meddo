@@ -243,7 +243,7 @@ Layer:
                     OR class >= 'trunk' AND z(!scale_denominator!) >= 7
                     OR class >= 'primary' AND z(!scale_denominator!) >= 8
                     OR class >= 'tertiary' AND z(!scale_denominator!) >= 9
-                    OR class >= 'minor' AND z(!scale_denominator!) >= 12
+                    OR class >= 'minor' AND z(!scale_denominator!) >= 13
                     OR class >= 'service' AND z(!scale_denominator!) >= 14
                     OR z(!scale_denominator!) >= 14
                   ) AND NOT (ramp AND z(!scale_denominator!) < 11)
