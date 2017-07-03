@@ -637,7 +637,7 @@ Layer:
   - id: transit_stop
     geometry: point
     properties:
-      minzoom: 10
+      minzoom: 15
       buffer-size: 128
     Datasource:
       <<: *osm2pgsql
@@ -672,13 +672,12 @@ Layer:
               WHERE way && !bbox!
           ) AS features
           WHERE way && !bbox!
-            AND (transit_mode = 'ferry' AND z(!scale_denominator!) >= 10
-              OR transit_mode = 'rail' AND station AND z(!scale_denominator!) >= 10
-              OR transit_mode = 'rail' AND NOT station AND z(!scale_denominator!) >= 13
-              OR transit_mode = 'tram' AND z(!scale_denominator!) >= 13
-              OR transit_mode = 'bus' AND station AND z(!scale_denominator!) >= 13
-              OR transit_mode = 'bus' AND NOT station AND z(!scale_denominator!) >= 15
-              OR transit_mode = 'taxi' AND z(!scale_denominator!) >= 14)
+            AND (transit_mode = 'ferry' AND z(!scale_denominator!) >= 15
+              OR transit_mode = 'rail' AND z(!scale_denominator!) >= 15
+              OR transit_mode = 'tram' AND z(!scale_denominator!) >= 15
+              OR transit_mode = 'bus' AND station AND z(!scale_denominator!) >= 15
+              OR transit_mode = 'bus' AND NOT station AND z(!scale_denominator!) >= 17
+              OR transit_mode = 'taxi' AND z(!scale_denominator!) >= 17)
           ORDER BY
             station DESC,
             CASE
