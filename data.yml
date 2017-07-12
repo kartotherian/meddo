@@ -629,6 +629,17 @@ Layer:
                   OR education = 'kindergarten' AND z(!scale_denominator!) >= 14
                   OR education = 'college' AND z(!scale_denominator!) >= 11
                   OR education = 'library' AND z(!scale_denominator!) >= 14)
+            UNION ALL
+            SELECT
+                osm_id,
+                way,
+                landuse::text AS class,
+                100 as prio,
+                way_area
+              FROM landuse
+              WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+                AND landuse IN ('residential', 'industrial', 'commercial', 'retail')
+                AND z(!scale_denominator!) >= 12
           ) AS features
           ORDER BY
             prio DESC,
