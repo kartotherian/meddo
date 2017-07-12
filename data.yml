@@ -33,7 +33,7 @@ Layer:
             osm_id,
             way
           FROM water_areas
-          WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+          WHERE way_area > 0.05*!pixel_width!::real*!pixel_height!::real
             AND z(!scale_denominator!) >= 5
         UNION ALL
         SELECT
@@ -94,7 +94,7 @@ Layer:
             osm_id,
             way
           FROM pier_area
-        --  WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+        --  WHERE way_area > 0.05*!pixel_width!::real*!pixel_height!::real
         UNION ALL
         SELECT
             osm_id,
@@ -206,7 +206,7 @@ Layer:
             osm_id,
             way
           FROM buildings
-          WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+          WHERE way_area > 0.05*!pixel_width!::real*!pixel_height!::real
           ORDER BY way_area
         ) AS building
     properties:
@@ -350,7 +350,7 @@ Layer:
             NULL::text AS ref
           FROM aeroway_area
           WHERE way && !bbox!
-            AND way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+            AND way_area > 0.05*!pixel_width!::real*!pixel_height!::real
             AND z(!scale_denominator!) >= 12
         ) AS aeroway
   - id: country_name
@@ -574,7 +574,7 @@ Layer:
               20 AS prio,
               way_area
             FROM wood_area
-            WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+            WHERE way_area > 0.05*!pixel_width!::real*!pixel_height!::real
               AND z(!scale_denominator!) >= 7
           UNION ALL
           SELECT
@@ -584,7 +584,7 @@ Layer:
               10 AS prio,
               way_area
             FROM recreation_polygon
-            WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+            WHERE way_area > 0.05*!pixel_width!::real*!pixel_height!::real
               AND z(!scale_denominator!) >= 11
               AND recreation IN ('park', 'dog_park', 'garden', 'golf')
         ) AS features
@@ -612,7 +612,7 @@ Layer:
                 20 as prio,
                 way_area
               FROM healthcare_polygon
-              WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+              WHERE way_area > 0.05*!pixel_width!::real*!pixel_height!::real
                 AND healthcare = 'hospital'
                 AND z(!scale_denominator!) >= 12
             UNION ALL
@@ -623,7 +623,7 @@ Layer:
                 10 as prio,
                 way_area
               FROM education_polygon
-              WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+              WHERE way_area > 0.05*!pixel_width!::real*!pixel_height!::real
                 AND (education = 'school' AND z(!scale_denominator!) >= 13
                   OR education = 'university' AND z(!scale_denominator!) >= 11
                   OR education = 'kindergarten' AND z(!scale_denominator!) >= 14
@@ -637,7 +637,7 @@ Layer:
                 100 as prio,
                 way_area
               FROM landuse
-              WHERE way_area > 0.01*!pixel_width!::real*!pixel_height!::real
+              WHERE way_area > 0.05*!pixel_width!::real*!pixel_height!::real
                 AND landuse IN ('residential', 'industrial', 'commercial', 'retail')
                 AND z(!scale_denominator!) >= 12
           ) AS features
