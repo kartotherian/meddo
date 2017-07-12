@@ -638,7 +638,7 @@ Layer:
                 way_area
               FROM landuse
               WHERE way_area > 0.05*!pixel_width!::real*!pixel_height!::real
-                AND landuse IN ('residential', 'industrial', 'commercial', 'retail')
+                AND landuse IN ('residential', 'industrial', 'commercial', 'retail', 'cemetery')
                 AND z(!scale_denominator!) >= 12
           ) AS features
           ORDER BY
