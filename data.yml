@@ -645,6 +645,42 @@ Layer:
             prio DESC,
             way_area DESC
         ) AS landuse
+  - id: landuse_name
+    geometry: point
+    properties:
+      minzoom: 12
+      buffer-size: 4
+    Datasource:
+      <<: *osm2pgsql
+      table: |-
+        (SELECT
+            osm_id,
+            ST_PointOnSurface(way) AS way,
+            class,
+            name,
+            (hstore_to_json(names))::text name_
+          FROM (
+            SELECT
+                osm_id,
+                way,
+                name,
+                names,
+                landuse::text AS class,
+                100 as prio,
+                way_area
+              FROM landuse
+              WHERE landuse IN ('residential', 'industrial', 'commercial', 'retail', 'cemetery')
+                AND z(!scale_denominator!) >= 12
+          ) AS features
+          WHERE way && !bbox!
+            AND way_area > 1024*!pixel_width!::real*!pixel_height!::real
+            AND NOT (way_area > 256*256*9*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 6) -- filter out large areas at higher zoomsway && !bbox!
+            AND ST_PointOnSurface(way) && !bbox!
+            AND (name IS NOT NULL OR names IS NOT NULL)
+          ORDER BY
+            prio DESC,
+            way_area DESC
+        ) AS landuse_name
   - id: transit_stop
     geometry: point
     properties:
