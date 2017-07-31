@@ -673,7 +673,7 @@ Layer:
                 AND z(!scale_denominator!) >= 12
           ) AS features
           WHERE way && !bbox!
-            AND way_area > 1024*!pixel_width!::real*!pixel_height!::real
+            AND (way_area > 256*256*0.1*!pixel_width!::real*!pixel_height!::real OR way_area > 1024*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 15)
             AND NOT (way_area > 256*256*9*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 6) -- filter out large areas at higher zoomsway && !bbox!
             AND ST_PointOnSurface(way) && !bbox!
             AND (name IS NOT NULL OR names IS NOT NULL)
