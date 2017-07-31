@@ -649,7 +649,7 @@ Layer:
     geometry: point
     properties:
       minzoom: 12
-      buffer-size: 4
+      buffer-size: 128
     Datasource:
       <<: *osm2pgsql
       table: |-
