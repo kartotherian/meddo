@@ -61,27 +61,6 @@ Layer:
           FROM ne_lake
           WHERE z(!scale_denominator!) < 5
         ) AS water
-  - id: water_name
-    geometry: polygon
-    properties:
-      minzoom: 10
-      buffer-size: 64
-    Datasource:
-      <<: *osm2pgsql
-      table: |-
-        (SELECT
-            osm_id,
-            ST_PointOnSurface(way) way,
-            name,
-            (hstore_to_json(names))::text name_
-          FROM water_areas
-          WHERE way && !bbox!
-            AND ST_PointOnSurface(way) && !bbox!
-            AND way_area > 256*256*1/16*!pixel_width!::real*!pixel_height!::real
-            AND NOT (way_area > 256*256*9*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 6) -- filter out large areas at higher zooms
-            AND (name IS NOT NULL OR names IS NOT NULL)
-            AND water != 'river' -- Exclude rivers, which are better labeled with their centerline
-        ) AS water_name
   - id: pier
     geometry: polygon
     properties:
@@ -176,27 +155,6 @@ Layer:
             class::text
           FROM protected_area
         ) AS park
-  - id: park_name
-    geometry: point
-    properties:
-      minzoom: 8
-      buffer-size: 128
-    Datasource:
-      <<: *osm2pgsql
-      table: |-
-        (SELECT
-            osm_id,
-            ST_PointOnSurface(way) way,
-            class::text,
-            name,
-            (hstore_to_json(names))::text name_
-          FROM protected_area
-          WHERE way && !bbox!
-            AND ST_PointOnSurface(way) && !bbox!
-            AND name IS NOT NULL
-            AND way_area > 0.25*256*256*!pixel_width!::real*!pixel_height!::real
-          ORDER BY way_area
-        ) AS park_name
   - id: building
     geometry: polygon
     Datasource:
@@ -645,10 +603,10 @@ Layer:
             prio DESC,
             way_area DESC
         ) AS landuse
-  - id: landuse_name
+  - id: landcover_name
     geometry: point
     properties:
-      minzoom: 12
+      minzoom: 5
       buffer-size: 128
     Datasource:
       <<: *osm2pgsql
@@ -669,13 +627,36 @@ Layer:
                 100 as prio,
                 way_area
               FROM landuse
-              WHERE landuse IN ('residential', 'industrial', 'commercial', 'retail', 'cemetery')
+              WHERE landuse IN ('residential', 'industrial', 'railway', 'commercial', 'retail', 'cemetery')
                 AND z(!scale_denominator!) >= 12
+            UNION ALL
+            SELECT
+                osm_id,
+                way,
+                name,
+                names,
+                class::text,
+                50 as prio,
+                way_area
+              FROM protected_area
+              WHERE z(!scale_denominator!) >= 8
+            UNION ALL
+            SELECT
+                osm_id,
+                way,
+                name,
+                names,
+                'water' AS class,
+                40 as prio,
+                way_area
+              FROM water_areas
+              WHERE z(!scale_denominator!) >= 5
+                AND water != 'river' -- Exclude rivers, which are better labeled with their centerline
           ) AS features
           WHERE way && !bbox!
-            AND (way_area > 256*256*0.1*!pixel_width!::real*!pixel_height!::real OR way_area > 1024*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 15)
-            AND NOT (way_area > 256*256*9*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 6) -- filter out large areas at higher zoomsway && !bbox!
             AND ST_PointOnSurface(way) && !bbox!
+            AND (way_area > 256*256*0.1*!pixel_width!::real*!pixel_height!::real OR way_area > 1024*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 15)
+            AND NOT (way_area > 256*256*9*!pixel_width!::real*!pixel_height!::real AND z(!scale_denominator!) >= 6) -- filter out large areas at higher zooms
             AND (name IS NOT NULL OR names IS NOT NULL)
           ORDER BY
             prio DESC,
