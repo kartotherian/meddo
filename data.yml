@@ -704,8 +704,8 @@ Layer:
               OR transit_mode = 'rail' AND z(!scale_denominator!) >= 15
               OR transit_mode = 'tram' AND z(!scale_denominator!) >= 15
               OR transit_mode = 'bus' AND station AND z(!scale_denominator!) >= 15
-              OR transit_mode = 'bus' AND NOT station AND z(!scale_denominator!) >= 17
-              OR transit_mode = 'taxi' AND z(!scale_denominator!) >= 17)
+              OR transit_mode = 'bus' AND NOT station AND z(!scale_denominator!) >= 15
+              OR transit_mode = 'taxi' AND z(!scale_denominator!) >= 15)
           ORDER BY
             station DESC,
             CASE
