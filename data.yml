@@ -345,29 +345,15 @@ Layer:
       table: |-
         (WITH osm_places AS ( -- Get all OSM data once, since it will be used in two parts of a UNION later
           SELECT
-              *
-            FROM (
-              SELECT
-                  node_id(osm_id) osm_id,
-                  name,
-                  names,
-                  class,
-                  rank,
-                  population,
-                  way,
-                  NULL::real AS way_area
-                FROM place_point
-              UNION ALL
-              SELECT
-                  osm_id,
-                  name,
-                  names,
-                  class,
-                  rank,
-                  population,
-                  way,
-                  way_area
-                FROM place_polygon) all_places
+              node_id(osm_id) osm_id,
+              name,
+              names,
+              class,
+              rank,
+              population,
+              way,
+              NULL::real AS way_area
+              FROM place_point
             WHERE way && !bbox!
               AND name IS NOT NULL
               AND (z(!scale_denominator!) < 8 AND rank >= 'town' AND class = 'settlement' -- For joining with NE data
@@ -396,34 +382,19 @@ Layer:
                   name,
                   names,
                   rank,
-                  population,
-                  way_area
-                FROM (
-                  SELECT
-                      osm_id,
-                      ST_PointOnSurface(way) way,
-                      name,
-                      names,
-                      class,
-                      rank,
-                      population,
-                      way_area
-                    FROM osm_places
-                  ) point_places
-                WHERE way && !bbox! -- Refilter after PointOnSurface
-                  AND z(!scale_denominator!) >= 8 -- Only do this for z8+
+                  population
+                FROM osm_places
+                WHERE z(!scale_denominator!) >= 8 -- Only do this for z8+
                 ORDER BY
                   ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
                   rank DESC NULLS LAST,
                   population DESC NULLS LAST,
-                  way_area DESC NULLS LAST,
                   length(name) DESC,
                   name
               ) gridded_osm_places
             ORDER BY
               rank DESC NULLS LAST,
               population DESC NULLS LAST,
-              way_area DESC NULLS LAST,
               length(name) DESC,
               name
           ) ordered_osm_places
