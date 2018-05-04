@@ -8,8 +8,7 @@ This style requires an osm2pgsql database loaded with [https://github.com/ClearT
 
 ### Requirements
 
-* ClearTables v0.0.10
-  The version required is subject to **rapid** change during development
+* ClearTables v0.1.0. If you're intending to use this with the Kartotherian Geoshapes service, you'll want the v0.1.0.wikidata.1 tag.
 * Mapnik 3.0.0 or later
 * Software that can interpret YAML style definitions like Kosmtik or Mapbox Studio Classic
 * osm2pgsql 0.90.1 or later with Lua support. Early C++ versions > 0.86.0 may still work with some bugs or missing data.
@@ -22,7 +21,7 @@ This style requires an osm2pgsql database loaded with [https://github.com/ClearT
 See the [ClearTables documentation for details](https://github.com/ClearTables/ClearTables#usage) and load into the database `ct`, with the command-line option `-G`
 
 ```sh
-git clone -b v0.0.9 git://github.com/ClearTables/ClearTables.git
+git clone -b v0.1.0 git://github.com/ClearTables/ClearTables.git
 pushd ClearTables
 createdb ct
 psql -d ct -c 'CREATE EXTENSION postgis; CREATE EXTENSION hstore; CREATE EXTENSION unaccent; CREATE EXTENSION fuzzystrmatch;'
