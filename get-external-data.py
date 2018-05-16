@@ -31,7 +31,6 @@ import logging
 
 def database_setup(conn, temp_schema, schema, metadata_table):
   with conn.cursor() as cur:
-      cur.execute('''CREATE SCHEMA IF NOT EXISTS {temp_schema};'''.format(temp_schema=temp_schema))
       cur.execute('''CREATE TABLE IF NOT EXISTS "{schema}"."{metadata_table}" (name text primary key, last_modified text);'''
                     .format(schema=schema, metadata_table=metadata_table))
   conn.commit()
