@@ -1,0 +1,12 @@
+language: node_js
+dist: trusty
+sudo: false
+node_js:
+  - "6"
+addons:
+  apt:
+    packages:
+    - python-yaml
+script:
+  # Check the YAML files are valid
+  - for f in data.yml external-data.yml indexes.yml; do python -c "from yaml import safe_load; safe_load(file('${f}'))"; done
