@@ -23,6 +23,9 @@ _parts:
 Layer:
   - id: water
     geometry: polygon
+    description: Water polygons, including oceans
+    fields:
+      osm_id: &osm_id ID of the OSM object, if known. Negative for relations
     properties:
       minzoom: 0
       buffer-size: 4
@@ -63,6 +66,9 @@ Layer:
         ) AS water
   - id: pier
     geometry: polygon
+    description: Piers as areas and lines
+    fields:
+      osm_id: *osm_id
     properties:
       minzoom: 12
       buffer-size: 4
@@ -82,6 +88,10 @@ Layer:
         ) AS pier
   - id: waterway
     geometry: linestring
+    description: Water lines
+    fields:
+      osm_id: &osm_id_norel ID of the OSM object, if known.
+      waterway: Type of waterway
     properties:
       minzoom: 6
       buffer-size: 4
@@ -101,6 +111,12 @@ Layer:
         ) AS waterway
   - id: waterway_name
     geometry: linestring
+    description: Names of water lines
+    fields:
+      osm_id: *osm_id_norel
+      name: &name Name of feature
+      name_: &name_ Names in other languages
+      waterway: Type of waterway
     properties:
       minzoom: 6
       buffer-size: 4
@@ -123,6 +139,11 @@ Layer:
         ) AS waterway
   - id: boundary
     geometry: linestring
+    description: Administrative boundaries
+    fields:
+      osm_id: *osm_id_norel
+      admin_level: Administrative level
+      disputed: If the boundary is disputed
     Datasource:
       <<: *osm2pgsql
       table: |-
@@ -143,6 +164,10 @@ Layer:
       minzoom: 2
   - id: park
     geometry: polygon
+    description: Protected area parks
+    fields:
+      osm_id: *osm_id
+      class: Type of protected area
     properties:
       minzoom: 8
       buffer-size: 8
@@ -157,6 +182,9 @@ Layer:
         ) AS park
   - id: building
     geometry: polygon
+    description: Buildings
+    fields:
+      osm_id: *osm_id
     Datasource:
       <<: *osm2pgsql
       table: |-
@@ -170,6 +198,14 @@ Layer:
     properties:
       minzoom: 12
   - id: transport
+    description: Transportation features
+    fields:
+      osm_id: *osm_id
+      class: &transport_class Class of feature
+      ramp: If the feature is a ramp
+      oneway: &oneway If the feature is oneway
+      brunnel: If the feature is a bridge or if it is a tunnel
+      layer: The layer for rendering order
     Datasource:
       <<: *osm2pgsql
       table: |-
@@ -236,6 +272,15 @@ Layer:
     properties:
       minzoom: 6
   - id: transport_name
+    description: Names of water lines
+    fields:
+      osm_id: *osm_id_norel
+      name: *name
+      name_: *name_
+      ref: The reference number of the feature
+      ref_length: The length of the ref field in characters
+      class: *transport_class
+      oneway: *oneway
     Datasource:
       <<: *osm2pgsql
       table: |-
@@ -285,6 +330,11 @@ Layer:
       minzoom: 6
       buffer-size: 128
   - id: aeroway
+    description: Features in aeroways
+    fields:
+      osm_id: *osm_id
+      class: *transport_class
+      ref: Reference of the feature
     properties:
       minzoom: 10
       buffer-size: 8
@@ -313,6 +363,12 @@ Layer:
         ) AS aeroway
   - id: country_name
     geometry: point
+    description: Features in aeroways
+    fields:
+      osm_id: *osm_id
+      name: *name
+      name_: *name_
+      way_pixels: &way_pixels Area of the feature, normalized to pixels at this zoom
     Datasource:
       <<: *osm2pgsql
       table: |-
@@ -340,6 +396,12 @@ Layer:
       minzoom: 2
       buffer-size: 256
   - id: place
+    description: Inhabited places
+    fields:
+      osm_id: &osm_id_node ID of OSM node, offset by 1E9
+      name: *name
+      name_: *name_
+      class: Class of feature
     Datasource:
       <<: *osm2pgsql
       table: |-
@@ -458,6 +520,12 @@ Layer:
       buffer-size: 256
   - id: state_name
     geometry: point
+    description: State names
+    fields:
+      osm_id: *osm_id
+      name: *name
+      name_: *name_
+      way_pixels: *way_pixels
     Datasource:
       <<: *osm2pgsql
       table: |-
@@ -486,6 +554,10 @@ Layer:
       buffer-size: 256
   - id: landcover
     geometry: polygon
+    description: Land coverings and other areas used for fills
+    fields:
+      osm_id: *osm_id
+      class: Type of use
     properties:
       minzoom: 7
       buffer-size: 4
@@ -523,6 +595,10 @@ Layer:
         ) AS landcover
   - id: landuse
     geometry: polygon
+    descriptions: Landuses
+    fields:
+      osm_id: *osm_id
+      class: Class of feature
     properties:
       minzoom: 12
       buffer-size: 4
@@ -576,6 +652,12 @@ Layer:
         ) AS landuse
   - id: landcover_name
     geometry: point
+    description: Names of landcover areas
+    fields:
+      osm_id: *osm_id
+      name: *name
+      name_: *name_
+      class: Class of feature
     properties:
       minzoom: 5
       buffer-size: 128
@@ -635,6 +717,13 @@ Layer:
         ) AS landuse_name
   - id: transit_stop
     geometry: point
+    description: Transit stops
+    fields:
+      osm_id: *osm_id
+      name: *name
+      name_: *name_
+      mode: Mode of transit
+      station: If the point is a station or a stop
     properties:
       minzoom: 15
       buffer-size: 128
