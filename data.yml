@@ -290,7 +290,7 @@ Layer:
             name,
             (hstore_to_json(names))::text name_,
             ref,
-            char_length(ref) AS ref_length,
+            pg_catalog.char_length(ref) AS ref_length,
             class::text,
             oneway
           FROM
@@ -304,7 +304,7 @@ Layer:
                   names,
                   class,
                   oneway IN ('true','reverse') AS oneway,
-                  array_to_string(refs, ';') AS ref,
+                  pg_catalog.array_to_string(refs, ';') AS ref,
                   NULL::real AS way_area
                 FROM roads
                 WHERE way && !bbox!
@@ -323,7 +323,7 @@ Layer:
             -- high-class roads have to be rendered on top of everything else. Here
             -- high-class roads need their labels placed first.
             ORDER BY class DESC, way_area NULLS FIRST,
-              length(name) DESC, name, osm_id
+              pg_catalog.length(name) DESC, name, osm_id
           ) AS typed_transport_name
         ) AS transport_name
     properties:
@@ -451,13 +451,13 @@ Layer:
                   ST_SnapToGrid(way, !pixel_width!::real*8, !pixel_height!::real*8),
                   rank DESC NULLS LAST,
                   population DESC NULLS LAST,
-                  length(name) DESC,
+                  pg_catalog.length(name) DESC,
                   name
               ) gridded_osm_places
             ORDER BY
               rank DESC NULLS LAST,
               population DESC NULLS LAST,
-              length(name) DESC,
+              pg_catalog.length(name) DESC,
               name
           ) ordered_osm_places
         UNION ALL
@@ -485,14 +485,14 @@ Layer:
                     pop_max
                 FROM ne_places ne
                   LEFT JOIN osm_places o ON (
-                    (lower(unaccent(o.name)) IN (lower(unaccent(ne.name)),
-                                                lower(unaccent(ne.namepar)),
-                                                lower(unaccent(ne.namealt)),
-                                                lower(unaccent(ne.nameascii)))
-                    OR lower(unaccent(o.names->'en')) IN (lower(unaccent(ne.name)),
-                                                lower(unaccent(ne.namepar)),
-                                                lower(unaccent(ne.namealt)),
-                                                lower(unaccent(ne.nameascii))))
+                    (pg_catalog.lower(unaccent(o.name)) IN (pg_catalog.lower(unaccent(ne.name)),
+                                                pg_catalog.lower(unaccent(ne.namepar)),
+                                                pg_catalog.lower(unaccent(ne.namealt)),
+                                                pg_catalog.lower(unaccent(ne.nameascii)))
+                    OR pg_catalog.lower(unaccent(o.names->'en')) IN (pg_catalog.lower(unaccent(ne.name)),
+                                                pg_catalog.lower(unaccent(ne.namepar)),
+                                                pg_catalog.lower(unaccent(ne.namealt)),
+                                                pg_catalog.lower(unaccent(ne.nameascii))))
                     AND ST_DWithin(ne.way, o.way, 50000)
                   )
                 WHERE ne.way && !bbox!
@@ -504,7 +504,7 @@ Layer:
                     OR z(!scale_denominator!) >= 3 AND scalerank < 2)
                 ORDER BY -- this order by determines the "best" OSM match.
                   ne.ctid,
-                  levenshtein(lower(unaccent(o.name)), lower(unaccent(ne.name))) ASC,
+                  levenshtein(pg_catalog.lower(unaccent(o.name)), pg_catalog.lower(unaccent(ne.name))) ASC,
                   ST_Distance(o.way, ne.way)
                 ) ne_places
               ORDER BY -- Set the order in terms of NE paramaters
